@@ -22,6 +22,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.otfvis.OTFVisLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -82,10 +83,24 @@ public class RunMatsim{
 		controler.run();
 	}
 
+	//installation of custom things done here to avoid duplicate code in runners
+	public void setupController(Controler controller){
+		//Add const function that takes Reservation into account
+		//Look @ parking contrib
+		controller.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+
+			}
+		})
+		//Add event listeners for stuffs
+		//
+	}
+
 	public static void main(String[] args) {
-		//new RunMatsim().runMATSimSampleScenario(args);
+		new RunMatsim().runMATSimSampleScenario(args);
 
 		// Choice between the 1pct and 10pct is one in the interface
-		new RunMatsim().runBerlinScenario(args);
+		//new RunMatsim().runBerlinScenario(args);
 	}
 }
