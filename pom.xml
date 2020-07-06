@@ -42,7 +42,23 @@
 			<!-- For MATSim snapshots: -->
 			<id>ojo-snapshots</id>
 			<url>https://oss.jfrog.org/libs-snapshot</url>
-		</repository>	
+		</repository>
+
+		<!-- These repos were added for testing with OSM stuff -->
+		<repository>
+			<id>topobyte</id>
+			<url>http://mvn.topobyte.de</url>
+		</repository>
+		<repository>
+			<id>slimjars</id>
+			<url>http://mvn.slimjars.com</url>
+		</repository>
+
+		<!-- For Berlin Scenario-->
+		<repository>
+			<id>jitpack.io</id>
+			<url>https://jitpack.io</url>
+		</repository>
 	</repositories>
 
 	<dependencies>
@@ -117,6 +133,22 @@
 		</dependency>
 		<!--Dependencies from where stated above to here are added as a service; they can be removed if you don't need them-->
 
+		<!-- https://mvnrepository.com/artifact/org.matsim.contrib/osm -->
+		<!-- Just add this, then reload maven project -->
+		<dependency>
+			<groupId>org.matsim.contrib</groupId>
+			<artifactId>osm</artifactId>
+			<!-- The sample version is 12.0 -->
+			<!-- ${matsim.version} cannot be used dere-->
+			<version>12.0</version>
+		</dependency>
+
+		<!-- For Berlin Scenario-->
+		<dependency>
+			<groupId>com.github.matsim-scenarios</groupId>
+			<artifactId>matsim-berlin</artifactId>
+			<version>5.4</version>
+		</dependency>
 	</dependencies>
 
 	<build>

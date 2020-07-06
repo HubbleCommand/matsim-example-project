@@ -25,6 +25,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.run.RunBerlinScenario;
 
 /**
  * @author nagel
@@ -32,8 +33,24 @@ import org.matsim.core.scenario.ScenarioUtils;
  */
 public class RunMatsim{
 
-	public static void main(String[] args) {
+	public void runBerlinScenario(String[] args){
+		Config config = RunBerlinScenario.prepareConfig( args ) ;
+		// possibly modify config here
 
+		Scenario scenario = RunBerlinScenario.prepareScenario( config ) ;
+		// possibly modify scenario here
+
+		Controler controler = RunBerlinScenario.prepareControler( scenario ) ;
+		// possibly modify controler here, e.g. add your own module
+
+		//Add this if want OTFVis live view thingy while simulation runs
+		//Can also just ask OTFVis to not sync in the interface
+		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
+
+		controler.run();
+	}
+
+	public void runMATSimSampleScenario(String[] args){
 		Config config;
 		if ( args==null || args.length==0 || args[0]==null ){
 			config = ConfigUtils.loadConfig( "scenarios/equil/config.xml" );
@@ -43,24 +60,32 @@ public class RunMatsim{
 		config.controler().setOverwriteFileSetting( OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists );
 
 		// possibly modify config here
-		
+
 		// ---
-		
+
 		Scenario scenario = ScenarioUtils.loadScenario(config) ;
-		
+
 		// possibly modify scenario here
-		
+
 		// ---
-		
+
 		Controler controler = new Controler( scenario ) ;
-		
+
 		// possibly modify controler here
 
-		controler.addOverridingModule( new OTFVisLiveModule() ) ;
-		
+		//Add this if want OTFVis live view thingy while simulation runs
+		//Can also just ask OTFVis to not sync in the interface
+		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
+
 		// ---
-		
+
 		controler.run();
 	}
-	
+
+	public static void main(String[] args) {
+		//new RunMatsim().runMATSimSampleScenario(args);
+
+		// Choice between the 1pct and 10pct is one in the interface
+		new RunMatsim().runBerlinScenario(args);
+	}
 }
