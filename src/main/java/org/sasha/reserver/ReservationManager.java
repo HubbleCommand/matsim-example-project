@@ -5,6 +5,7 @@ import org.matsim.api.core.v01.network.Link;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+//Look at the ReservationSlot class for more useful links
 public final class ReservationManager {
     private static ReservationManager INSTANCE;
     private String info = "Initial info class";

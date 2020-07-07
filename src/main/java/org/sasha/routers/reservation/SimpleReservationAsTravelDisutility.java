@@ -6,8 +6,13 @@ import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.vehicles.Vehicle;
 import org.sasha.reserver.ReservationManager;
 
+//Doc: https://www.matsim.org/apidocs/core/0.9.0/org/matsim/core/router/util/TravelDisutility.html
 public class SimpleReservationAsTravelDisutility implements TravelDisutility {
-    private final ReservationManager reservationManager;
+    private ReservationManager reservationManager;
+
+    public SimpleReservationAsTravelDisutility() {
+        this.reservationManager = ReservationManager.getInstance();
+    }
 
     public SimpleReservationAsTravelDisutility(ReservationManager reservationManager) {
         this.reservationManager = reservationManager;

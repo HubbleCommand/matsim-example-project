@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Set;
 
 // Note: use the OSMPrepperSimple, this one consistently encounters problems
-// I have no idea where I originally found this code, but it is not 100% original
+// Taken from https://github.com/matsim-org/matsim-code-examples/blob/12.x/src/main/java/org/matsim/codeexamples/network/RunCreateNetworkFromOSM.java
 public class OSMPrepper {
     /*Default
     private static String UTM32nAsEpsg = "EPSG:25832";
@@ -46,6 +46,7 @@ public class OSMPrepper {
         new OSMPrepper().create();
     }
 
+    @SuppressWarnings("SimplifiableIfStatement")
     private void create() throws MalformedURLException {
         // choose an appropriate coordinate transformation. OSM Data is in WGS84. When working in central Germany,
         // EPSG:25832 or EPSG:25833 as target system is a good choice

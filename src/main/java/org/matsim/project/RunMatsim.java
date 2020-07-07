@@ -31,9 +31,13 @@ import org.sasha.routers.reservation.SimpleReservationRouterFactory;
 import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 
 /**
- * @author nagel
+ * @author sasha, based off of nagel's examples
  *
- */
+ *
+ * Look here for doc on making custom scoring function:
+ *  - https://github.com/matsim-org/matsim-code-examples/tree/ad3b07980f33ebf063aa19dc54b61a278d249f08/src/main/java/org/matsim/codeexamples/scoring/example16customscoring
+ *
+ * */
 public class RunMatsim{
 	public void runBerlinScenario(String[] args){
 		Config config = RunBerlinScenario.prepareConfig( args ) ;
@@ -84,6 +88,10 @@ public class RunMatsim{
 		controler.run();
 	}
 
+	public void setupControllerScoring(Controler controller){
+
+	}
+
 	//installation of custom things done here to avoid duplicate code in runners
 	public void setupController(Controler controller){
 		//Add custom router
@@ -99,6 +107,8 @@ public class RunMatsim{
 				// our own cost function and do the reservation once the route
 				// is calculated
 				//bindLeastCostPathCalculatorFactory().to(SimpleReservationRouterFactory.class);
+
+				//Use RoutingModule
 				addRoutingModuleBinding("car").to(SimpleReservationRoutingModule.class);
 			}
 		});
