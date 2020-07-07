@@ -27,13 +27,14 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenario;
+import org.sasha.routers.reservation.SimpleReservationRouterFactory;
+import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 
 /**
  * @author nagel
  *
  */
 public class RunMatsim{
-
 	public void runBerlinScenario(String[] args){
 		Config config = RunBerlinScenario.prepareConfig( args ) ;
 		// possibly modify config here
@@ -85,15 +86,26 @@ public class RunMatsim{
 
 	//installation of custom things done here to avoid duplicate code in runners
 	public void setupController(Controler controller){
-		//Add const function that takes Reservation into account
-		//Look @ parking contrib
+		//Add custom router
 		controller.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
-
+				//Example originally followed was
+				// https://github.com/matsim-org/matsim-code-examples/tree/ad3b07980f33ebf063aa19dc54b61a278d249f08/src/main/java/org/matsim/codeexamples/programming/leastCostPath
+				// https://github.com/matsim-org/matsim-code-examples/tree/11.x/src/main/java/org/matsim/codeexamples/programming/leastCostPath
+				//However this method is too complicated:
+				//Requires a complete re-implementation of a routing function
+				// which is not what is wanted, we just want to be able to use
+				// our own cost function and do the reservation once the route
+				// is calculated
+				//bindLeastCostPathCalculatorFactory().to(SimpleReservationRouterFactory.class);
+				addRoutingModuleBinding("car").to(SimpleReservationRoutingModule.class);
 			}
-		})
-		//Add event listeners for stuffs
+		});
+		//Add const function that takes Reservation into account
+		//Look @ parking contrib
+
+		//Add event listeners for stuffs / scoring functions
 		//
 	}
 

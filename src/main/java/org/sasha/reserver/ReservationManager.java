@@ -28,8 +28,8 @@ public final class ReservationManager {
     // getters and setters
 
     //Only need time and link where reservation is needed
-    public void makeReservation(int timeStart, int timeEnd, Link link){
-        int startSlot = timeStart % timeInterval;
+    public void makeReservation(double timeStart, double timeEnd, Link link){
+        int startSlot = (int) (timeStart % timeInterval);
         for(int i = startSlot; i < ((timeEnd % timeInterval) - (timeStart % timeInterval)); i++){
             if(reservations.containsKey(i)) {      // If a slot for this time exists
                 reservations.put(i, new ReservationSlot());
@@ -39,9 +39,16 @@ public final class ReservationManager {
         }
     }
 
-    public ReservationSlot getReservation(int time){
+    public ReservationSlot getAllReservationAtTime(double time){
         //Each slot is worth, base 300 seconds = 5 minutes
         //If recieve time in seconds, do modulo
-        return reservations.get(time % timeInterval);
+        return reservations.get((int) (time % timeInterval));
+    }
+
+    public int getReservations(double time, Link link){
+        //Each slot is worth, base 300 seconds = 5 minutes
+        //If recieve time in seconds, do modulo
+        ReservationSlot reserve = reservations.get((int) (time % timeInterval));
+        return reserve.getReservations(link);
     }
 }
