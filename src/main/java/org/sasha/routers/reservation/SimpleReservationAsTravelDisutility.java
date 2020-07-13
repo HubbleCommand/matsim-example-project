@@ -15,7 +15,8 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
     }
 
     public SimpleReservationAsTravelDisutility(ReservationManager reservationManager) {
-        this.reservationManager = reservationManager;
+        //this.reservationManager = reservationManager.getInstance();
+        this.reservationManager = ReservationManager.getInstance();
     }
 
     //TODO put these different cost calculations in different classes, that is basically the design pattern here
@@ -31,7 +32,7 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
     }
 
     public double calculateAdvancedRelativeReservedCost(double linkCapacity, double reservedCapacity){
-        return (reservedCapacity - linkCapacity) * 100;
+        return Math.abs(reservedCapacity - linkCapacity) * 100;
     }
 
     @Override
@@ -40,8 +41,9 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
         double linkCapacity = link.getCapacity(time);
 
         //Get the current number of reservations for the link
-        double reservedCapacity = this.reservationManager.getReservations(time, link);
-
+        //double reservedCapacity = this.reservationManager.getInstance().getReservations(time, link);
+        double reservedCapacity = ReservationManager.getInstance().getReservations(time, link);
+        //double reservedCapacity = 0;
         //Compute cost
         return calculateSimpleRelativeReservedCost(linkCapacity, reservedCapacity);
     }

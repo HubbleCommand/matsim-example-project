@@ -66,6 +66,7 @@
 	</module>
 
 	<!-- Added for randomly changing departure times for activities -->
+	<!-- Look at slide 61 of https://www.simunto.com/matsim/tutorials/eifer2019/slides_day2.pdf-->
 	<module name="TimeAllocationMutator" >
 		<param name="mutationRange" value="1800.0" />
 	</module>

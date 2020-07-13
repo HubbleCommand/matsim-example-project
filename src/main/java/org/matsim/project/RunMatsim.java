@@ -27,7 +27,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenario;
-import org.sasha.routers.reservation.SimpleReservationRouterFactory;
+import org.sasha.routers.reservation.SimpleReservationLeastCostPathCalculatorFactory;
 import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 
 /**
@@ -41,17 +41,10 @@ import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 public class RunMatsim{
 	public void runBerlinScenario(String[] args){
 		Config config = RunBerlinScenario.prepareConfig( args ) ;
-		// possibly modify config here
-
 		Scenario scenario = RunBerlinScenario.prepareScenario( config ) ;
-		// possibly modify scenario here
-
 		Controler controler = RunBerlinScenario.prepareControler( scenario ) ;
-		// possibly modify controler here, e.g. add your own module
 
-		//Add this if want OTFVis live view thingy while simulation runs
-		//Can also just ask OTFVis to not sync in the interface
-		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
+		controler.addOverridingModule( new OTFVisLiveModule() ) ;
 
 		controler.run();
 	}
@@ -81,19 +74,25 @@ public class RunMatsim{
 
 		//Add this if want OTFVis live view thingy while simulation runs
 		//Can also just ask OTFVis to not sync in the interface
+		//this.setupControllerMe(controler);
 		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
-
+		addCustomCostFactory(controler);
 		// ---
 
 		controler.run();
 	}
 
-	public void setupControllerScoring(Controler controller){
-
+	public void addCustomCostFactory(Controler controler){
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				bindLeastCostPathCalculatorFactory().to(SimpleReservationLeastCostPathCalculatorFactory.class);
+			}
+		});
 	}
 
 	//installation of custom things done here to avoid duplicate code in runners
-	public void setupController(Controler controller){
+	public void setupControllerMe(Controler controller){
 		//Add custom router
 		controller.addOverridingModule(new AbstractModule() {
 			@Override
@@ -110,6 +109,8 @@ public class RunMatsim{
 
 				//Use RoutingModule
 				addRoutingModuleBinding("car").to(SimpleReservationRoutingModule.class);
+				addRoutingModuleBinding("car-reserve").to(SimpleReservationRoutingModule.class);
+
 			}
 		});
 		//Add const function that takes Reservation into account

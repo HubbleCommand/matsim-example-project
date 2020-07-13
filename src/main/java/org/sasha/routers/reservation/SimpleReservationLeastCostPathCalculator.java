@@ -3,6 +3,7 @@ package org.sasha.routers.reservation;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.Node;
+import org.matsim.core.router.DijkstraFactory;
 import org.matsim.core.router.RoutingModule;
 
 import java.util.Collections;
@@ -37,8 +38,12 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.vehicles.Vehicle;
 
 @Deprecated //No longer need this as well TODO remove
-public final class SimpleReservationRouter implements LeastCostPathCalculator {
+public final class SimpleReservationLeastCostPathCalculator implements LeastCostPathCalculator {
+    //@Inject private Map<String,TravelTime> travelTimes ;
+
     private final Network network;
+    //private final TravelTime travelTime;
+    private LeastCostPathCalculator pathCalculator;
     private Map<Id<Node>,Double> costToNode = new HashMap<Id<Node>, Double>();
     private Map<Id<Node>,Id<Node>> previousNodes = new HashMap<Id<Node>, Id<Node>>();
     PriorityQueue<Id<Node>> queue = new PriorityQueue<Id<Node>>(11, new Comparator<Id<Node>>() {
@@ -49,13 +54,28 @@ public final class SimpleReservationRouter implements LeastCostPathCalculator {
         }
 
     });
-    SimpleReservationRouter(Network network, TravelDisutility travelCosts, TravelTime travelTimes) {
+    SimpleReservationLeastCostPathCalculator(Network network, TravelDisutility travelCosts, TravelTime travelTimes) {
         this.network = network;
+
+        /*if(travelTimes == null){
+
+        } else {
+            this.travelTime = travelTimes;
+        }*/
+
+        TravelDisutility travelDisutility = new SimpleReservationAsTravelDisutility();
+        this.pathCalculator = new DijkstraFactory().createPathCalculator(this.network, travelDisutility, travelTimes);
     }
 
     @Override
     public Path calcLeastCostPath(Node fromNode, Node toNode, double starttime, Person person, Vehicle vehicle) {
 
+        Path path = pathCalculator.calcLeastCostPath(fromNode, toNode, starttime, person, vehicle);
+
+        //Can reserve here before returning path
+
+        return path;
+        /*
         initializeNetwork(fromNode.getId());
 
         while (!queue.isEmpty()) {
@@ -73,7 +93,7 @@ public final class SimpleReservationRouter implements LeastCostPathCalculator {
             }
         }
 
-        return null;
+        return null;*/
     }
 
     private Path createPath(Id<Node> toNodeId, Id<Node> fromNodeId) {

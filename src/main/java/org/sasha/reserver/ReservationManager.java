@@ -16,6 +16,7 @@ public final class ReservationManager {
     private HashMap<Integer, ReservationSlot> reservations; //Integer here stores the slot, relative to the time
 
     private ReservationManager() {
+        reservations = new HashMap<>();
     }
 
     public synchronized static ReservationManager getInstance() {
@@ -49,7 +50,14 @@ public final class ReservationManager {
     public int getReservations(double time, Link link){
         //Each slot is worth, base 300 seconds = 5 minutes
         //If recieve time in seconds, do modulo
-        ReservationSlot reserve = reservations.get((int) (time % timeInterval));
-        return reserve.getReservations(link);
+        int timeToCheck = (int) (time % timeInterval);
+        ReservationSlot reserve = reservations.get(timeToCheck);
+        //THIS WAS RETURNING NULL
+        //IF THERE IS NO K,V ENTRY FOR timeToCheck, then will return null
+        if(reserve != null){
+            return reserve.getReservations(link);
+        } else {
+            return 0;
+        }
     }
 }
