@@ -27,10 +27,36 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenario;
-import org.sasha.routers.reservation.SimpleReservationLeastCostPathCalculatorFactory;
-import org.sasha.routers.reservation.SimpleReservationModule;
-import org.sasha.routers.reservation.SimpleReservationRoutingModule;
+import org.sasha.routers.reservation.*;
 
+
+import java.net.URL;
+import java.util.Map;
+
+import com.google.inject.Key;
+import com.google.inject.name.Names;
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.network.Link;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
+import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.OutputDirectoryLogging;
+import org.matsim.core.router.MainModeIdentifier;
+import org.matsim.core.router.MainModeIdentifierImpl;
+import org.matsim.core.router.RoutingModule;
+import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.io.IOUtils;
+import org.matsim.examples.ExamplesUtils;
+import org.matsim.facilities.ActivityFacility;
+import org.matsim.facilities.ActivityOption;
+import org.matsim.utils.objectattributes.attributable.Attributes;
 /**
  * @author sasha, based off of nagel's examples
  *
@@ -74,9 +100,9 @@ public class RunMatsim{
 		// possibly modify controler here
 
 
-		//this.setupControllerMe(controler);
+		setupControllerMe2(controler, scenario);
 		//addCustomCostFactory(controler);
-		addSimpleDoohiky(controler);
+		//addSimpleDoohiky(controler);
 
 		//Add this if want OTFVis live view thingy while simulation runs
 		//Can also just ask OTFVis to not sync in the interface
@@ -94,6 +120,30 @@ public class RunMatsim{
 			@Override
 			public void install() {
 				bindLeastCostPathCalculatorFactory().to(SimpleReservationLeastCostPathCalculatorFactory.class);
+			}
+		});
+	}
+
+	public void setupControllerMe2(Controler controler, Scenario scenario){
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				addRoutingModuleBinding("car").toProvider(
+						new SimpleReservationRoutingModuleProvider(
+								// the module uses the trip router for the PT part.
+								// This allows to automatically adapt to user settings,
+								// including if they are specified at a later stage
+								// in the initialisation process.
+								binder().getProvider(Key.get(RoutingModule.class, Names.named(TransportMode.pt))),
+								scenario.getPopulation().getFactory(),
+								//teleport,
+								controler.getScenario().getNetwork()
+						)
+				);
+				// we still need to provide a way to identify our trips
+				// as being teleportation trips.
+				// This is for instance used at re-routing.
+				bind(MainModeIdentifier.class).toInstance(new SimpleMainModeIdentifier(new MainModeIdentifierImpl()));
 			}
 		});
 	}
@@ -116,7 +166,7 @@ public class RunMatsim{
 
 				//Use RoutingModule
 				addRoutingModuleBinding("car").to(SimpleReservationRoutingModule.class);
-				addRoutingModuleBinding("car-reserve").to(SimpleReservationRoutingModule.class);
+				//addRoutingModuleBinding("car-reserve").to(SimpleReservationRoutingModule.class);
 
 			}
 		});
