@@ -34,7 +34,15 @@ public final class ReservationManager {
         int startSlot = (int) (timeStart % timeInterval);
         for(int i = startSlot; i < ((timeEnd % timeInterval) - (timeStart % timeInterval)); i++){
             if(reservations.containsKey(i)) {      // If a slot for this time exists
-                reservations.put(i, new ReservationSlot());
+                //int currentReservations = reservations.get(i).getReservations(link);
+                //reservations.put(i, new ReservationSlot());
+
+                //Don't need to put new instance of Reservation or update
+                //HashMap contains a reference to the Object, so updating the object
+                //Will update the value of the object that the HashMap references
+                //NOTE: this is because the object's class has a method that updates it's values
+                // https://stackoverflow.com/questions/8195261/update-element-in-arraylist-hashmap-using-java
+                reservations.get(i).makeReservation(link);
             } else {                                // Else add new slot
                 reservations.put(i, new ReservationSlot());
             }

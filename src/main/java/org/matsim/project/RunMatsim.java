@@ -28,6 +28,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.run.RunBerlinScenario;
 import org.sasha.routers.reservation.SimpleReservationLeastCostPathCalculatorFactory;
+import org.sasha.routers.reservation.SimpleReservationModule;
 import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 
 /**
@@ -72,14 +73,20 @@ public class RunMatsim{
 
 		// possibly modify controler here
 
+
+		//this.setupControllerMe(controler);
+		//addCustomCostFactory(controler);
+		addSimpleDoohiky(controler);
+
 		//Add this if want OTFVis live view thingy while simulation runs
 		//Can also just ask OTFVis to not sync in the interface
-		//this.setupControllerMe(controler);
 		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
-		addCustomCostFactory(controler);
-		// ---
 
 		controler.run();
+	}
+
+	public void addSimpleDoohiky(Controler controler){
+		controler.addOverridingModule(new SimpleReservationModule());
 	}
 
 	public void addCustomCostFactory(Controler controler){
