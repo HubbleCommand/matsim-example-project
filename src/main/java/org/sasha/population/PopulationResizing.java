@@ -15,6 +15,8 @@ import org.matsim.core.scenario.ScenarioUtils;
  * For "resizing" a population to a specific area, look at:
  *      https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/population/reducePopulationToAreaOfInterest/RunReducePopulationToAreaOfInterestExample.java
  */
+//FIXME always has null pointer exception, no point using, just use GUI tool for population sample
+//FIXME Appears to need a start link for the routes! (and then probably an end link)
 
 // https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/population/downsamplePopulation/RunPopulationDownsamplingExample.java
 // This will be used to resize the population created
@@ -46,7 +48,6 @@ public class PopulationResizing {
                 fraction = Double.parseDouble(args[3]);
             }
         } else {//FIXME remove this else statement want to be runnable
-            //FIXME always has null pointer exception, no point using, just use GUI tool for population sample
             inputPopFilename = "D:\\Files\\Uni\\Projet Bachelor\\matsim-sim\\scenarios\\geneva\\plansCPPwTFCT_routefixmaybe.xml" ;
             outputPopFilename = "D:\\tmp\\plans_genf_all_10pct.xml" ;
             fraction = .10;
