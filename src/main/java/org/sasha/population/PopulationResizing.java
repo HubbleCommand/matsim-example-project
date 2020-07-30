@@ -11,10 +11,14 @@ import org.matsim.core.scenario.ScenarioUtils;
  * @author kn
  * @author jlaudan
  * @author sasha, but I didn't really do anything, just added thing to set fraction in args
+ *
+ * For "resizing" a population to a specific area, look at:
+ *      https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/population/reducePopulationToAreaOfInterest/RunReducePopulationToAreaOfInterestExample.java
  */
 
 // https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/population/downsamplePopulation/RunPopulationDownsamplingExample.java
 // This will be used to resize the population created
+@Deprecated
 public class PopulationResizing {
     private final String inputPopFilename;
     private final String outputPopFilename;
@@ -32,7 +36,7 @@ public class PopulationResizing {
         String inputPopFilename = "";
         double fraction = 0;
 
-        if ( args!=null ) {
+        if ( args!=null && false ) {    //FIXME remove false if want to be runnable
             if (args.length != 3) {
                 System.err.println("Usage: cmd inputPop.xml.gz outputPop.xml.gz 0.3");
                 System.exit(401);
@@ -41,10 +45,11 @@ public class PopulationResizing {
                 outputPopFilename = args[1] ;
                 fraction = Double.parseDouble(args[3]);
             }
-        } else {
-            inputPopFilename = args[0] ;
-            outputPopFilename = args[1] ;
-            fraction = Double.parseDouble(args[3]);
+        } else {//FIXME remove this else statement want to be runnable
+            //FIXME always has null pointer exception, no point using, just use GUI tool for population sample
+            inputPopFilename = "D:\\Files\\Uni\\Projet Bachelor\\matsim-sim\\scenarios\\geneva\\plansCPPwTFCT_routefixmaybe.xml" ;
+            outputPopFilename = "D:\\tmp\\plans_genf_all_10pct.xml" ;
+            fraction = .10;
         }
 
         PopulationResizing app = new PopulationResizing(inputPopFilename, outputPopFilename, fraction);
