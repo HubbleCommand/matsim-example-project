@@ -39,7 +39,7 @@ public class OSMPrepperSimple {
 
         if ( args!=null && false ) {    //FIXME remove false if want to be runnable
             if (args.length != 5) {
-                System.err.println("Usage: cmd inputMap.xml.gz outputMap.xml.gz EPSG:4326 EPSG:2056 car:bike:pt");
+                System.err.println("Usage: cmd map.osm outputMap.xml.gz EPSG:4326 EPSG:2056 car:bike:pt");
                 System.exit(401);
             } else {
                 inputMapFilename = args[0] ;
@@ -52,7 +52,7 @@ public class OSMPrepperSimple {
             inputMapFilename = "D:\\Files\\Uni\\Projet Bachelor\\matsim-sim\\scenarios\\geneva\\mappbfs\\genf_area_small.osm" ;
             outputMapFilename = "D:\\Files\\Uni\\Projet Bachelor\\matsim-sim\\scenarios\\geneva\\mappbfs\\tmp\\network_clean_coordtransf.xml.gz";
             sourceCoordTransform = "EPSG:4326" ;
-            targetCoordTransform = "EPSG:4326" ;
+            targetCoordTransform =  "EPSG:25832";
             String modesStr = "car";
             modes = modesStr.split(":");
         }
@@ -66,11 +66,17 @@ public class OSMPrepperSimple {
 
         Network network = NetworkUtils.createNetwork();
 
+        /**
+         * Look at
+         * https://github.com/matsim-org/matsim-libs/blob/master/matsim/src/main/java/org/matsim/core/utils/io/OsmNetworkReader.java
+         * For clues.
+         * WGS84 is not optimal for MATSim, which is why we coord transform to something (better?)
+         * */
         //OsmNetworkReader reader = new OsmNetworkReader(network, coordinateTransformation);
         //Another method, but files are much bigger...
         OsmNetworkReader reader = new OsmNetworkReader(network, coordinateTransformation, true, true);
-        reader.setKeepPaths(true);
-        reader.setMemoryOptimization(true);
+        //reader.setKeepPaths(true);
+        //reader.setMemoryOptimization(true);
 
         reader.parse(inputMapFilename);
 
@@ -80,6 +86,7 @@ public class OSMPrepperSimple {
 
         //https://github.com/matsim-org/matsim-code-examples/issues/271
         //Add additional data to links (here need to add reservation mode to links)
+        System.out.println("Doing personal config stuffs...");
         int count=1;
         for(Link link : network.getLinks().values()) {
             link.setAllowedModes(new HashSet<>(Arrays.asList(modes)));
