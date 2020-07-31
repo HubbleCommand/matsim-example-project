@@ -16,6 +16,7 @@ import org.matsim.core.router.RoutingModule;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
+import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.facilities.Facility;
 
 import java.util.Arrays;
@@ -55,43 +56,65 @@ import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
 import org.matsim.facilities.Facility;
+import org.sasha.reserver.ReservationManager;
 
 /**
  * @author sasha, based off of nagel's examples
- *
+ * Look at following classes for clues:
+ *      Dijkstra
  */
 //TODO finish
 public class SimpleReservationRoutingModule implements RoutingModule {
     //@Inject private Population population ;
     //@Inject private Scenario scenario;
 
+    public static final String MAIN_MODE = "rcar";
     private static final Logger logger = Logger.getLogger(SimpleReservationRoutingModule.class);
-
-    private Object iterationData;
 
     private final String mode;
     private final PopulationFactory populationFactory;
 
     private final Network network;
     //private final LeastCostPathCalculator routeAlgo;
-    private TravelTime travelTime;
-    private TravelDisutility travelDisutility;
-    private LeastCostPathCalculator pathCalculator;
+    //private TravelTime travelTime;
+    //private TravelDisutility travelDisutility;
+    private final LeastCostPathCalculator pathCalculator;
 
+    //FIXME this should be an available function,
+    /*public SimpleReservationRoutingModule(){
+        this.network = network;
+        this.travelTime = new FreeSpeedTravelTime();
+        travelDisutility = new SimpleReservationAsTravelDisutility();
+        pathCalculator = new DijkstraFactory().createPathCalculator(network, travelDisutility, this.travelTime);
+        this.mode = "rcar";
+        this.populationFactory = populationFactory;
+    }*/
+
+    //@Inject
     public SimpleReservationRoutingModule(
-            TravelTime travelTime, //FIXME If something goes wrong, probably here
+            //TravelTime travelTime, //FIXME If something goes wrong, probably here
             //TravelDisutility travelDisutility, //Include this if many disutility functions end up being made
             String mode,
             final Network network,
-            final PopulationFactory populationFactory//,  //Just bring a PF here... it's SO MUCH EASIER & SIMPLER
-            /*final LeastCostPathCalculator routeAlgo*/) {
+            final PopulationFactory populationFactory,  //Just bring a PF here... it's SO MUCH EASIER & SIMPLER
+            final LeastCostPathCalculator routeAlgo) {
         this.network = network;
         //this.routeAlgo = routeAlgo;
-        this.travelTime = travelTime;
-        travelDisutility = new SimpleReservationAsTravelDisutility();
-        pathCalculator = new DijkstraFactory().createPathCalculator(network, travelDisutility, this.travelTime);
+
+        //this.travelTime = travelTime;
+        //this.travelTime = new FreeSpeedTravelTime();
+
+        //travelDisutility = new SimpleReservationAsTravelDisutility(100, 1, 60);
+
+        //FIXME put this in the module? Could fix crashes?
+        //pathCalculator = new DijkstraFactory().createPathCalculator(network, travelDisutility, this.travelTime);
+        this.pathCalculator = routeAlgo;
         this.mode = mode;
         this.populationFactory = populationFactory;
+    }
+
+    public void reservePath(Path path, double time){
+
     }
 
     @Override
@@ -112,8 +135,8 @@ public class SimpleReservationRoutingModule implements RoutingModule {
 
         Leg newLeg = this.populationFactory.createLeg( this.mode );
 
-        Gbl.assertNotNull(fromFacility);
-        Gbl.assertNotNull(toFacility);
+        //Gbl.assertNotNull(fromFacility);
+        //Gbl.assertNotNull(toFacility);
 
         Link fromLink = this.network.getLinks().get(fromFacility.getLinkId());
         if ( fromLink==null ) {
@@ -137,6 +160,20 @@ public class SimpleReservationRoutingModule implements RoutingModule {
 
             if (path == null)
                 throw new RuntimeException("No route found from node " + startNode.getId() + " to node " + endNode.getId() + " by mode " + this.mode + ".");
+
+            //Reserve Path
+            //NOTE: departureTime is start time
+            double timeToBeElapsed = 0;
+            for(Link link : path.links){
+                double timeOnLink = link.getFreespeed(departureTime + timeToBeElapsed) / link.getLength();
+                ReservationManager.getInstance().makeReservation(
+                        (departureTime + timeToBeElapsed),
+                        (departureTime + timeToBeElapsed + timeOnLink),
+                        link
+                    );
+                timeToBeElapsed += timeOnLink;
+            }
+
             NetworkRoute route = this.populationFactory.getRouteFactories().createRoute(NetworkRoute.class, fromLink.getId(), toLink.getId());
             route.setLinkIds(fromLink.getId(), NetworkUtils.getLinkIds(path.links), toLink.getId());
             route.setTravelTime(path.travelTime);
@@ -145,6 +182,8 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             newLeg.setRoute(route);
             newLeg.setTravelTime(path.travelTime);
         } else {
+            //TODO reserve?
+
             // create an empty route == staying on place if toLink == endLink
             // note that we still do a route: someone may drive from one location to another on the link. kai, dec'15
             NetworkRoute route = this.populationFactory.getRouteFactories().createRoute(NetworkRoute.class, fromLink.getId(), toLink.getId());
@@ -158,6 +197,7 @@ public class SimpleReservationRoutingModule implements RoutingModule {
         /* FIXME this was in the example code,
         *  but IntelliJ coughs up on code analysis when committing
         * */
+        logger.warn("Finished calculating route");
         return Arrays.asList( newLeg );
 
         /*PopulationFactory pf = scenario.getPopulation().getFactory();

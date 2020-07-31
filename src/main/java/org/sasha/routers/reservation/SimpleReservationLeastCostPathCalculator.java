@@ -53,8 +53,13 @@ public final class SimpleReservationLeastCostPathCalculator implements LeastCost
             this.travelTime = travelTimes;
         }*/
 
-        TravelDisutility travelDisutility = new SimpleReservationAsTravelDisutility();
+        //TravelDisutility travelDisutility = new SimpleReservationAsTravelDisutility();
         this.pathCalculator = new DijkstraFactory().createPathCalculator(this.network, travelCosts, travelTimes);
+    }
+
+    SimpleReservationLeastCostPathCalculator(Network network, LeastCostPathCalculator leastCostPathCalculator){
+        this.network = network;
+        this.pathCalculator = leastCostPathCalculator;
     }
 
     @Override

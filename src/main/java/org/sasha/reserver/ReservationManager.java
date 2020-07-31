@@ -9,7 +9,7 @@ import java.util.HashMap;
 public final class ReservationManager {
     private static ReservationManager INSTANCE;
     private String info = "Initial info class";
-    private int timeInterval = 300; //Default 5-minute time interval, stored as seconds
+    private double timeInterval = 300; //Default 5-minute time interval, stored as seconds
 
     //ArrayList cannot have stuff added to an index bigger than it's current size
     //Hashmap will be easier
@@ -44,7 +44,7 @@ public final class ReservationManager {
                 // https://stackoverflow.com/questions/8195261/update-element-in-arraylist-hashmap-using-java
                 reservations.get(i).makeReservation(link);
             } else {                                // Else add new slot
-                reservations.put(i, new ReservationSlot());
+                reservations.put(i, new ReservationSlot(link));
             }
         }
     }
@@ -63,9 +63,21 @@ public final class ReservationManager {
         //THIS WAS RETURNING NULL
         //IF THERE IS NO K,V ENTRY FOR timeToCheck, then will return null
         if(reserve != null){
-            return reserve.getReservations(link);
+            int reservations = reserve.getReservations(link);
+            return reservations ;
         } else {
+            reservations.put(timeToCheck, new ReservationSlot(link));
             return 0;
         }
+    }
+
+    //TODO need to relate the capacity in vehicles / min or whater to the time interval here
+    public double getTimeInterval(){
+        return this.timeInterval;
+    }
+
+    //Used to clear the reservations at the end of an iteration
+    public void clearReservations(){
+        reservations.clear();
     }
 }
