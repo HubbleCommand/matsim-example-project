@@ -25,6 +25,9 @@ public class ResetReservationsIterationEndsEventHandler implements IterationEnds
         //So doing this just in case!)
         String reservations = ReservationManager.getInstance().getReservations();
         logger.warn(reservations);
+
+        //TODO write reservations to file
+
         ReservationManager.getInstance().clearReservations();
     }
 }
