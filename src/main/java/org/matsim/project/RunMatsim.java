@@ -113,49 +113,24 @@ public class RunMatsim{
 
 		Controler controler = new Controler( scenario ) ;
 
+		//Install other stuffs
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				addEventHandlerBinding().toInstance(new CongestionDetectionEventHandler(scenario.getNetwork(), config.controler().getOutputDirectory()));
+			}
+		});
+
 		//Install my own module
-		System.out.println("Installing my module ...");
-		controler.addOverridingModule(new SimpleReservationModule(config, controler, scenario, "car"));
+		//controler.addOverridingModule(new SimpleReservationModule(config, controler, scenario, "car"));
 		System.out.println("Installed my module !");
+
 
 		//Add this if want OTFVis live view thingy while simulation runs
 		//Can also just ask OTFVis to not sync in the interface
 		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
 
-		setupCongestionDetector(controler, scenario);
-
 		controler.run();
-	}
-
-	private void setupCongestionDetector(Controler controler, Scenario scenario){
-		//So I guess this version just allows to read event results? I honestly have no fucking idea
-		//why this was in the examples, because it doesn't seem to actually register the event handlers
-		/*EventsManager events = EventsUtils.createEventsManager();
-
-		CongestionDetectionEventHandler congestionDetectionEventHandler = new CongestionDetectionEventHandler(scenario.getNetwork());
-		events.addHandler(congestionDetectionEventHandler);*/
-
-		//Is this needed?
-		/*MatsimEventsReader reader = new MatsimEventsReader(events);
-		String inputFile = "output/example/output_events.xml.gz";
-		reader.readFile(inputFile);*/
-
-		//congestionDetectionEventHandler.writeCharts("output/totalCongestion.png", "output/averageCongestion.png");
-
-		//System.out.println("Events file read!");
-
-		//V2 actually works! Somewhat! Need to refer to logfile for results cause (read TODO in CongestionDetectionEventHandler)
-		controler.addOverridingModule(new AbstractModule(){
-			@Override public void install() {
-				/*this.addEventHandlerBinding().toInstance( new MyEventHandler1() );
-				this.addEventHandlerBinding().toInstance( new MyEventHandler2( ) );
-				this.addEventHandlerBinding().toInstance( new MyEventHandler3() );*/
-				this.addEventHandlerBinding().toInstance( new CongestionDetectionEventHandler( scenario.getNetwork() )  );
-
-				//This is needed for Startup and Shutdown listeners
-				//addControlerListenerBinding().toInstance(new CongestionDetectionEventHandler(scenario.getNetwork()));
-			}
-		});
 	}
 
 	public static void main(String[] args) {
