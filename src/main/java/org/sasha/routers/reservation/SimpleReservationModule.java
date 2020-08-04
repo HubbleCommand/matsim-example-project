@@ -91,26 +91,23 @@ public class SimpleReservationModule extends AbstractModule {
         //addEventHandlerBinding().toInstance((EventHandler) new ResetReservationsIterationEndsEventHandler());
     }
 
-    private void installCongestionDetector(){
-
-    }
-
     @Override
     public void install() {
-        installProvider();
+        //installProvider();
         //V0 worst, doesn't really do anything for my case
         //bindLeastCostPathCalculatorFactory().to(SimpleReservationLeastCostPathCalculatorFactory.class);
 
         //V1 doesn't actually do reservation
         //addTravelDisutilityFactoryBinding("car").to(SimpleReservationAsTravelDisutilityFactory.class);
 
+        //addRoutingModuleBinding(this.reservationMode).to(SimpleReservationRoutingModule.class);
+
         //Va working
-        /*addRoutingModuleBinding(this.reservationMode).toInstance(new SimpleReservationRoutingModule(
+        addRoutingModuleBinding(this.reservationMode).toInstance(new SimpleReservationRoutingModule(
                 "car",
                 scenario.getNetwork(),
                 scenario.getPopulation().getFactory(),
                 new SimpleReservationLeastCostPathCalculator(
-                        scenario.getNetwork(),
                         //new SimpleReservationAsTravelDisutility(),
                         //new FreeSpeedTravelTime()
                         new DijkstraFactory().createPathCalculator(
@@ -121,10 +118,12 @@ public class SimpleReservationModule extends AbstractModule {
                 /*new DijkstraFactory().createPathCalculator(
                         scenario.getNetwork(),
                         new SimpleReservationAsTravelDisutility(100, 1, 60),
-                        new FreeSpeedTravelTime())
-        ));*/
+                        new FreeSpeedTravelTime())*/
+        ));
+        //addEventHandlerBinding().toInstance(new ResetReservationsIterationEndsEventHandler());
+        addControlerListenerBinding().toInstance(new ResetReservationsIterationEndsEventHandler());
 
-        //addRoutingModuleBinding(this.reservationMode).to(SimpleReservationRoutingModule.class);
-        //bindLeastCostPathCalculatorFactory()
+        //Adding strategy
+        //addPlanStrategyBinding()
     }
 }

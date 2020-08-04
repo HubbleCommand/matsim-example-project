@@ -65,9 +65,6 @@ import org.sasha.reserver.ReservationManager;
  */
 //TODO finish
 public class SimpleReservationRoutingModule implements RoutingModule {
-    //@Inject private Population population ;
-    //@Inject private Scenario scenario;
-
     public static final String MAIN_MODE = "rcar";
     private static final Logger logger = Logger.getLogger(SimpleReservationRoutingModule.class);
 
@@ -75,9 +72,6 @@ public class SimpleReservationRoutingModule implements RoutingModule {
     private final PopulationFactory populationFactory;
 
     private final Network network;
-    //private final LeastCostPathCalculator routeAlgo;
-    //private TravelTime travelTime;
-    //private TravelDisutility travelDisutility;
     private final LeastCostPathCalculator pathCalculator;
 
     //FIXME this should be an available function,
@@ -90,24 +84,12 @@ public class SimpleReservationRoutingModule implements RoutingModule {
         this.populationFactory = populationFactory;
     }*/
 
-    //@Inject
     public SimpleReservationRoutingModule(
-            //TravelTime travelTime, //FIXME If something goes wrong, probably here
-            //TravelDisutility travelDisutility, //Include this if many disutility functions end up being made
             String mode,
             final Network network,
-            final PopulationFactory populationFactory,  //Just bring a PF here... it's SO MUCH EASIER & SIMPLER
+            final PopulationFactory populationFactory,
             final LeastCostPathCalculator routeAlgo) {
         this.network = network;
-        //this.routeAlgo = routeAlgo;
-
-        //this.travelTime = travelTime;
-        //this.travelTime = new FreeSpeedTravelTime();
-
-        //travelDisutility = new SimpleReservationAsTravelDisutility(100, 1, 60);
-
-        //FIXME put this in the module? Could fix crashes?
-        //pathCalculator = new DijkstraFactory().createPathCalculator(network, travelDisutility, this.travelTime);
         this.pathCalculator = routeAlgo;
         this.mode = mode;
         this.populationFactory = populationFactory;
@@ -119,11 +101,7 @@ public class SimpleReservationRoutingModule implements RoutingModule {
 
     @Override
     public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime, Person person) {
-        logger.warn("Got here!");
-        // calculate a route based on iterationData
-
         //Use base router like Dijkstra
-
         //Reserve route with ReservationManager
 
         //In matsim-libs look at
@@ -161,9 +139,10 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             if (path == null)
                 throw new RuntimeException("No route found from node " + startNode.getId() + " to node " + endNode.getId() + " by mode " + this.mode + ".");
 
+            //TODO either do reservation here or in Reservation LCPC
             //Reserve Path
             //NOTE: departureTime is start time
-            double timeToBeElapsed = 0;
+            /*double timeToBeElapsed = 0;
             for(Link link : path.links){
                 double timeOnLink = link.getFreespeed(departureTime + timeToBeElapsed) / link.getLength();
                 ReservationManager.getInstance().makeReservation(
@@ -172,7 +151,7 @@ public class SimpleReservationRoutingModule implements RoutingModule {
                         link
                     );
                 timeToBeElapsed += timeOnLink;
-            }
+            }*/
 
             NetworkRoute route = this.populationFactory.getRouteFactories().createRoute(NetworkRoute.class, fromLink.getId(), toLink.getId());
             route.setLinkIds(fromLink.getId(), NetworkUtils.getLinkIds(path.links), toLink.getId());
@@ -192,12 +171,14 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             newLeg.setRoute(route);
             newLeg.setTravelTime(0);
         }
-        newLeg.setDepartureTime(departureTime);
 
-        /* FIXME this was in the example code,
-        *  but IntelliJ coughs up on code analysis when committing
-        * */
-        logger.warn("Finished calculating route");
+        //TODO see if can change departure time here without Strategy or whatnot that are totally not clear on how to implement?
+        //FIXME reset to departureTime
+        newLeg.setDepartureTime(departureTime);
+        //newLeg.setDepartureTime(departureTime + 10000);
+
+        // FIXME this was in the example code, but IntelliJ coughs up on code analysis when committing
+        //logger.warn("Finished calculating route\n");
         return Arrays.asList( newLeg );
 
         /*PopulationFactory pf = scenario.getPopulation().getFactory();

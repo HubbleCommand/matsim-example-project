@@ -21,9 +21,11 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
     private final double timeDifferenceFactor;
     private final double flowCapacityFactor;
 
+    private int timesCalled = 0;
+
     public SimpleReservationAsTravelDisutility() {
         this.travelTime = new FreeSpeedTravelTime();
-        this.ReservationDisutilityFactor = 100;
+        this.ReservationDisutilityFactor = 1000;
         this.flowCapacityFactor = 1;
         this.timeDifferenceFactor = 60;
     }
@@ -35,15 +37,25 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
         this.travelTime = new FreeSpeedTravelTime();
     }
 
-    //Very simple cost calculator
-    //If link has space left for reservations, no cost
-    //If there are too many reservations, have cost
+    /*
+        Very simple cost calculator
+        If link has space left for reservations, default cost
+        If there are too many reservations, default cost plus weighted
+        We can do this as MATSim works on a mesoscopic level, and detailed vehicle interactions are not
+        simulated. This means that vehicles will only affect each other when there is no free reservable
+        capacity on the link and that they are physically blocking each other from progressing on the link.
+     */
     public double calculateRelativeReservedCost(double linkCapacity, double reservedCapacity, Link link){
         if(reservedCapacity - linkCapacity <= 0){
             //Returning 0 here will result in NullPointerExceptions
             return getLinkMinimumTravelDisutility(link);
         } else {
-            return getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity) * ReservationDisutilityFactor);
+            // For something more fine-tunable, use + instead of *
+            //getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
+
+            //Or can also use
+            //(getLinkMinimumTravelDisutility(link) * ReservationDisutilityFactor) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
+            return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor);
         }
     }
 
@@ -58,6 +70,9 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
     @Override
     public double getLinkTravelDisutility(final Link link, final double time, final Person person, final Vehicle vehicle) {
         //Get link capacity
+        //TODO check if Link.getCapacity(Time) is already normalized to the flow factors!
+        //might be available throuth link.getFlowCapacityPerSec(time)
+        //will regardless need to take into account timeDifferenceFactor, as this normalizes time difference to time slot interval
         double linkCapacity =
                 ( 1 / this.flowCapacityFactor) *                                // Take into account the flow capacity factor
                                                                                 // However, need to inverse the factor,
@@ -65,17 +80,18 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
                                                                                 // link capacity in vehicles / hour, but we need vehicles / minute
                 (ReservationManager.getInstance().getTimeInterval() / 60);      // Take into account the time interval of the slots
 
+        timesCalled += 1;
         if(linkCapacity != 0){
-            LOG.warn("Link has capacity!");
             //Get the current number of reservations for the link
-            //double reservedCapacity = this.reservationManager.getInstance().getReservations(time, link);
             double reservedCapacity = ReservationManager.getInstance().getReservations(time, link);
-            //double reservedCapacity = 0;
+
+            if(timesCalled % 100000 == 0){
+                LOG.warn("Link : " + link.getId() + " at time : " + time + " has reserved : " + reservedCapacity + "\n");
+            }
 
             //Compute cost
             return this.calculateRelativeReservedCost(linkCapacity, reservedCapacity, link);
         } else {
-            LOG.warn("Link has no capacity!");
             return this.getLinkMinimumTravelDisutility(link);
         }
     }

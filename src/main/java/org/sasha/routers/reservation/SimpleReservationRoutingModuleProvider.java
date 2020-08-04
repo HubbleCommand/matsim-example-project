@@ -47,7 +47,6 @@ public class SimpleReservationRoutingModuleProvider implements Provider<RoutingM
                         new SimpleReservationAsTravelDisutility(100, 1, 60),
                         new FreeSpeedTravelTime())*/
                 new SimpleReservationLeastCostPathCalculator(
-                        network,
                         //new SimpleReservationAsTravelDisutility(),
                         //new FreeSpeedTravelTime()
                         new DijkstraFactory().createPathCalculator(
