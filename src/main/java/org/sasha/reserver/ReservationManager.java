@@ -8,7 +8,6 @@ import java.util.HashMap;
 //Look at the ReservationSlot class for more useful links
 public final class ReservationManager {
     private static ReservationManager INSTANCE;
-    private String info = "Initial info class";
     private double timeInterval = 300; //Default 5-minute time interval, stored as seconds
 
     //ArrayList cannot have stuff added to an index bigger than it's current size
@@ -27,8 +26,6 @@ public final class ReservationManager {
         return INSTANCE;
     }
 
-    // getters and setters
-
     //Only need time and link where reservation is needed
     public void makeReservation(double timeStart, double timeEnd, Link link){
         int startSlot = (int) (timeStart % timeInterval);
@@ -37,9 +34,8 @@ public final class ReservationManager {
                 //int currentReservations = reservations.get(i).getReservations(link);
                 //reservations.put(i, new ReservationSlot());
 
-                //Don't need to put new instance of Reservation or update
-                //HashMap contains a reference to the Object, so updating the object
-                //Will update the value of the object that the HashMap references
+                //Don't need to put new instance of Reservation or update, HashMap contains a reference to the Object,
+                // so updating the object will update the value of the object that the HashMap references
                 //NOTE: this is because the object's class has a method that updates it's values
                 // https://stackoverflow.com/questions/8195261/update-element-in-arraylist-hashmap-using-java
                 reservations.get(i).makeReservation(link);
@@ -66,7 +62,7 @@ public final class ReservationManager {
             int reservations = reserve.getReservations(link);
             return reservations ;
         } else {
-            reservations.put(timeToCheck, new ReservationSlot(link));
+            //reservations.put(timeToCheck, new ReservationSlot(link));
             return 0;
         }
     }
