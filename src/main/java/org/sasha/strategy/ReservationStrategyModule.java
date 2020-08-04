@@ -25,6 +25,8 @@ import org.matsim.core.replanning.ReplanningContext;
  */
 public class ReservationStrategyModule implements PlanStrategyModule, ActivityEndEventHandler {
     //TODO Probably least cost path calculator here instead
+    //TODO look @ "How to write your own extension" part on ObjectAttributes and Customizable
+    //TODO as gives insights on how to work with Attributes
     SimpleReservationRoutingModule routingModule;
 
     private static final Logger log = Logger.getLogger(ReservationStrategyModule.class);
