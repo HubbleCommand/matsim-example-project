@@ -64,8 +64,8 @@ public class CongestionDetectionEventHandler implements
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        logger.warn("Iteration ends for congestion detector... NOTITEND");
-        System.out.println("Iteration ends for congestion detector... NOTITEND");
+        logger.warn("Iteration ends for congestion detector... NOTITEND\n");
+        System.out.println("Iteration ends for congestion detector... NOTITEND\n");
     }
 
     private class CongElemData{
@@ -183,9 +183,9 @@ public class CongestionDetectionEventHandler implements
     @Override
     public void reset(int iteration) {
         logger.warn("Iteration ends for congestion detector...");
-        logger.warn("Total congestion for this iteration (" + iteration + "): " + congestionTime);
-        logger.warn("Total number of plans for iteration (" + iteration + "): " + numberOfDepartureEvents);
-        logger.warn("Average congestion per plan : " + congestionTime / numberOfDepartureEvents);
+        logger.warn("Total congestion for this iteration (" + iteration + "): " + congestionTime + "\n");
+        logger.warn("Total number of plans for iteration (" + iteration + "): " + numberOfDepartureEvents + "\n");
+        logger.warn("Average congestion per plan : " + congestionTime / numberOfDepartureEvents + "\n");
         //iterationCongestion.add(congestionTime);
         //iterationPlans.add(numberOfDepartureEvents);
         //this.iterationCongestion.put(iteration, congestionTime);
@@ -193,7 +193,7 @@ public class CongestionDetectionEventHandler implements
         this.congestionTime = 0;
         this.numberOfDepartureEvents = 0;
         this.earliestLinkExitTime.clear();
-        //logger.warn("Total congestion for this iteration (" + iteration + "): " + congestionTime);
+        //logger.warn("Total congestion for this iteration (" + iteration + "): " + congestionTime + "");
         /*iterationCongestion.add(congestionTime);
         iterationPlans.add(numberOfDepartureEvents);
         //this.iterationCongestion.put(iteration, congestionTime);
@@ -269,19 +269,19 @@ public class CongestionDetectionEventHandler implements
     }
 
     public void writeCharts(String filenameTotal, String filenameAverage){
-        logger.warn("Writing charts...");
+        logger.warn("Writing charts..." + "\n");
         /*if(filenameAverage.equals(filenameTotal)){  //Make sure file names aren't identical to avoid overwritting
             filenameAverage = filenameAverage + "2";
         }*/
-        logger.warn("Writing charts...");
-        logger.warn("Number of iterations to write: " + iterationCongestion.size());
+        logger.warn("Writing charts..." + "\n");
+        logger.warn("Number of iterations to write: " + iterationCongestion.size() + "\n");
         double[] iterationNumbers = new double[iterationCongestion.size()];
         double[] timeCongested = new double[iterationCongestion.size()];
         double[] averageTimeCongested = new double[iterationCongestion.size()];
 
         for (int i = 0; i < iterationCongestion.size(); i++){
             iterationNumbers[i] = i;
-            logger.warn("Congestion this iteration : " + iterationCongestion.get(i).toString());
+            logger.warn("Congestion this iteration : " + iterationCongestion.get(i).toString() + "\n");
             timeCongested[i] = iterationCongestion.get(i);
 
             averageTimeCongested[i] = iterationCongestion.get(i) / iterationPlans.get(i);
@@ -294,6 +294,6 @@ public class CongestionDetectionEventHandler implements
         XYLineChart chartAverage = new XYLineChart("Average Congestion per Trip", "iteration", "average congestion");
         chartAverage.addSeries("time", iterationNumbers, averageTimeCongested);  //title, iteration number, average congestion per trip
         chartAverage.saveAsPng(filenameAverage, 800, 600);
-        logger.warn("Made charts...");
+        logger.warn("Made charts...\n");
     }
 }
