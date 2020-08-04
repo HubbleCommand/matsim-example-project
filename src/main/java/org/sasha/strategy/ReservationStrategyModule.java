@@ -1,11 +1,11 @@
 package org.sasha.strategy;
 
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
-import org.matsim.api.core.v01.population.Plan;
-import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.api.core.v01.population.Route;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.api.core.v01.replanning.PlanStrategyModule;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.replanning.ReplanningContext;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.sasha.routers.reservation.SimpleReservationRoutingModule;
@@ -15,9 +15,9 @@ import org.matsim.api.core.v01.events.ActivityEndEvent;
 import org.matsim.api.core.v01.events.handler.ActivityEndEventHandler;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Plan;
-import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.replanning.PlanStrategyModule;
 import org.matsim.core.replanning.ReplanningContext;
+import org.matsim.api.core.v01.network.Node;
 
 /**
  * This might be a better example...
@@ -55,17 +55,48 @@ public class ReservationStrategyModule implements PlanStrategyModule, ActivityEn
     @Override
     public void handlePlan(Plan plan) {
         //plan.getPlanElements()
+        int index = 0;
         for(PlanElement planElement : plan.getPlanElements()){
             Attributes attributes = planElement.getAttributes();
 
             System.out.println(attributes.toString());
 
-            attributes.getAttribute("");
+            //attributes.getAttribute("");
             /*for(String planAttribute : ){
                 
             }*/
             
             //routingModule.calcRoute(planElement)
+
+            if(planElement instanceof Activity){
+                double activityStartTime = ((Activity) planElement).getStartTime();
+
+                //TODO calculate least costly route at time:
+                Coord fromCoord = ((Activity) planElement).getCoord();
+                Node fromNode = NetworkUtils.getNearestLink( net, fromCoord).getFromNode() ;
+
+                //Get next activity
+                Activity nextActivity = null;
+                //Start iterating over plans starting at current index, as we want to find the next activity
+                for(int i = index; i < plan.getPlanElements().size() - 1; i++){
+                    if(plan.getPlanElements().get(i) instanceof Activity) {
+                        nextActivity = (Activity) plan.getPlanElements().get(i);
+                        break;
+                    }
+                }
+                if(nextActivity != null){
+                    Node toNode = NetworkUtils.getNearestLink(net, nextActivity.getCoord()).getToNode();
+
+                    //TODO if least cost calculated route for this time is too high, or if there are lots of links that are
+                    //TODO oversaturated, then need to try to calculate routes for slightly different times
+                    //routingModule.calcRoute(fromNode, toNode, ((Activity) planElement).getStartTime(), plan.getPerson());
+
+                    //TODO set activity start / end time with new start / end time
+                    //((Activity) planElement).setStartTime(12000)
+                }
+            }
+
+            index++;
         }
     }
 
