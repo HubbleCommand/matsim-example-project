@@ -172,7 +172,7 @@ public class CongestionDetectionEventHandler implements
             data.add(new ArrayList<>(Arrays.asList(congElemData)));
             this.congestionTripsNLinks.put(vehId, data);
         }
-        System.out.println("Person: " + event.getPersonId() + " left in vehicle : " + vehId);
+        //System.out.println("Person: " + event.getPersonId() + " left in vehicle : " + vehId);
     }
 
     @Override
