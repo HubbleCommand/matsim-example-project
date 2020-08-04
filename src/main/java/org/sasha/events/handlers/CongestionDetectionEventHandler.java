@@ -53,7 +53,7 @@ public class CongestionDetectionEventHandler implements
 
     private ArrayList<Double> iterationCongestion = new ArrayList<>();
     private ArrayList<Integer> iterationPlans = new ArrayList<>();
-    
+
     private ArrayList<Double> congestionTimes = new ArrayList<>();
 
     //Stores which person is using the vehicle.
@@ -128,7 +128,7 @@ public class CongestionDetectionEventHandler implements
         double excessTravelTime = event.getTime() - this.earliestLinkExitTime.get( event.getVehicleId() ) ;
         congestionTime += excessTravelTime;
 
-        System.out.println( "excess travel time: " + excessTravelTime ) ;
+        //System.out.println( "excess travel time: " + excessTravelTime ) ;
 
         //Need to update existing nested CongElemData, last link
         ArrayList<ArrayList<CongElemData>> tripsData = this.congestionTripsNLinks.get(event.getVehicleId());
@@ -153,7 +153,6 @@ public class CongestionDetectionEventHandler implements
 
     @Override
     public void handleEvent(PersonDepartureEvent event) {
-
         Id<Vehicle> vehId = Id.create( event.getPersonId(), Vehicle.class ) ; // unfortunately necessary since vehicle departures are not uniformly registered
         this.earliestLinkExitTime.put( vehId, event.getTime() ) ;
         this.numberOfDepartureEvents += 1;
@@ -255,6 +254,14 @@ public class CongestionDetectionEventHandler implements
                     ));
                 }
             }
+
+            //Write average congestion for iteration
+            congestionWriter.write("Number of trips : " + numberOfTrips + "\n");
+            congestionWriter.write("Total time spent in congestion : " + totalCongestion + "\n");
+            if(numberOfTrips != 0){
+                congestionWriter.write("Average congestion per trip : " + (totalCongestion / numberOfTrips) + "\n");
+            }
+
             congestionWriter.close();
         } catch (IOException ioException){
             System.out.println("Could not write congestion data!");
