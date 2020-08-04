@@ -12,8 +12,7 @@ import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 
 //FIXME use IterationEndsListener or just use basic EventHandler or BasicEventHandler
 
-public class ResetReservationsIterationEndsEventHandler implements
-        IterationEndsListener, BasicEventHandler {
+public class ResetReservationsIterationEndsEventHandler implements IterationEndsListener {
     private static final Logger logger = Logger.getLogger(ResetReservationsIterationEndsEventHandler.class);
 
     @Override
@@ -24,18 +23,6 @@ public class ResetReservationsIterationEndsEventHandler implements
         //ReservationManager, but things might get weird
         //as the ReservationManager is a singleton
         //So doing this just in case!)
-        String reservations = ReservationManager.getInstance().getReservations();
-        logger.warn(reservations);
-        ReservationManager.getInstance().clearReservations();
-    }
-
-    @Override
-    public void handleEvent(Event event) {
-
-    }
-
-    @Override
-    public void reset(int iteration) {
         String reservations = ReservationManager.getInstance().getReservations();
         logger.warn(reservations);
         ReservationManager.getInstance().clearReservations();
