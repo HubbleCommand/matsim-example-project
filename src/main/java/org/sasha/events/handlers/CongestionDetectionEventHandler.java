@@ -43,54 +43,41 @@ import scala.Int;
  * To register events: addEventHandlerBinding().toInstance( new CongestionDetectionEventHandler( scenario.getNetwork() )  )
  * To register controller events: addControlerListenerBinding().toInstance(new CongestionDetectionEventHandler(scenario.getNetwork()));
  * TODO: be able to write iteration data to charts (need data class intermediary)
+ * FIXME doesn't do anything for iteration 0
  */
 
 public class CongestionDetectionEventHandler implements
         LinkEnterEventHandler, LinkLeaveEventHandler, PersonArrivalEventHandler, PersonDepartureEventHandler, IterationEndsListener {
     private static final Logger logger = Logger.getLogger(CongestionDetectionEventHandler.class);
-    //private Map<Integer, Double> iterationCongestion = new HashMap<>();         //HashMap to store the total time spent in congestion
-    //private Map<Integer, Integer> iterationPlans = new HashMap<>();             //HashMap to store number of plans per iteration, instead of getting all plans from controller or scenario or whatever
-
     private ArrayList<Double> iterationCongestion = new ArrayList<>();
     private ArrayList<Integer> iterationPlans = new ArrayList<>();
-
-    private ArrayList<Double> congestionTimes = new ArrayList<>();
-
-    //Stores which person is using the vehicle.
-    private Map<Id<Vehicle>, Id<Person>> vehicleToPerson = new HashMap<>();
-
-    //Stores, per vehicle, the trips, and in trips each link travelled
-    private Map<Id<Vehicle>, ArrayList<ArrayList<CongElemData>>> congestionTripsNLinks = new HashMap<>();
-
-    @Override
-    public void notifyIterationEnds(IterationEndsEvent event) {
-        logger.warn("Iteration ends for congestion detector... NOTITEND\n");
-        System.out.println("Iteration ends for congestion detector... NOTITEND\n");
-    }
+    private Map<Id<Vehicle>, Id<Person>> vehicleToPerson = new HashMap<>();//Stores which person is using the vehicle.
+    private Map<Id<Vehicle>, ArrayList<ArrayList<CongElemData>>> congestionTripsNLinks = new HashMap<>();//Stores, per vehicle, the trips, and in trips each link travelled
+    private Network network;
+    private double congestionTime = 0;                                          //Congestion for the current iteration
+    private int numberOfDepartureEvents = 0;
+    private Map<Id<Vehicle>,Double> earliestLinkExitTime = new HashMap<>() ;
+    private String filenameTotal;
+    private String filenameAverage;
+    private String outputDirectory;
 
     private class CongElemData{
         //Double is used instead of double to allow for null values
-        public CongElemData(Id<Link> linkId, Double timeEntered, Double timeExited, Double minTravelTime, Double excessTravelTime){
+        public CongElemData(Id<Link> linkId, Double timeEntered, Double timeExited, Double minTravelTime, Double excessTravelTime, Double length){
             this.linkId = linkId;
             this.timeEntered = timeEntered;
             this.timeExited = timeExited;
             this.minTravelTime = minTravelTime;
             this.excessTravelTime = excessTravelTime;
+            this.length = length;
         }
         public Id<Link> linkId;
         public Double timeEntered;
         public Double timeExited;
         public Double minTravelTime;
         public Double excessTravelTime;
+        public Double length;
     }
-
-    private double congestionTime = 0;                                          //Congestion for the current iteration
-    private int numberOfDepartureEvents = 0;
-    private Map<Id<Vehicle>,Double> earliestLinkExitTime = new HashMap<>() ;
-    private Network network;
-    private String filenameTotal;
-    private String filenameAverage;
-    private String outputDirectory;
 
     public CongestionDetectionEventHandler( Network network, String outputDirectory ) {
         this.network = network ;
@@ -107,6 +94,12 @@ public class CongestionDetectionEventHandler implements
     }
 
     @Override
+    public void notifyIterationEnds(IterationEndsEvent event) {
+        logger.warn("Iteration ends for congestion detector... NOTITEND\n");
+        System.out.println("Iteration ends for congestion detector... NOTITEND\n");
+    }
+
+    @Override
     public void handleEvent(LinkEnterEvent event) {
 
         Link link = network.getLinks().get( event.getLinkId() ) ;
@@ -114,7 +107,7 @@ public class CongestionDetectionEventHandler implements
         this.earliestLinkExitTime.put( event.getVehicleId(), event.getTime() + linkTravelTime ) ;
 
         //Need to add new link element to existing trip
-        CongElemData congElemData = new CongElemData(event.getLinkId(), event.getTime(), null, event.getTime(), null);
+        CongElemData congElemData = new CongElemData(event.getLinkId(), event.getTime(), null, event.getTime(), null, network.getLinks().get(event.getLinkId()).getLength());
 
         ArrayList<ArrayList<CongElemData>> tripsData = this.congestionTripsNLinks.get(event.getVehicleId());
         tripsData.get(tripsData.size() - 1).add(congElemData);
@@ -161,7 +154,7 @@ public class CongestionDetectionEventHandler implements
         vehicleToPerson.put(vehId, event.getPersonId());
 
         //Need to add new trip
-        CongElemData congElemData = new CongElemData(event.getLinkId(), event.getTime(), null, event.getTime(), null);
+        CongElemData congElemData = new CongElemData(event.getLinkId(), event.getTime(), null, event.getTime(), null, null);
 
         if(this.congestionTripsNLinks.containsKey(vehId)){
             ArrayList<ArrayList<CongElemData>> data = new ArrayList<>(this.congestionTripsNLinks.get(vehId));
@@ -207,26 +200,48 @@ public class CongestionDetectionEventHandler implements
         congestionTripsNLinks.clear();
     }
 
+    private class TripData {
+        public int trip_number;
+        public Id<Vehicle> vehicle_id;
+        public Id<Person> person_id;
+        public Double start_time;
+        public Double end_time;
+        public Double congested_time;
+        public Double trip_distance;
+
+        TripData(int trip_number, Id<Vehicle> vehicle_id, Id<Person> person_id, Double start_time, Double end_time, Double congested_time, Double trip_distance){
+            this.trip_number = trip_number;
+            this.vehicle_id = vehicle_id;
+            this.person_id = person_id;
+            this.start_time = start_time;
+            this.end_time = end_time;
+            this.congested_time = congested_time;
+            this.trip_distance = trip_distance;
+        }
+    }
+
     public void writeIterationResults(int iteration){
         //Write trip congestion results for this iteration
         BufferedWriter congestionWriter = IOUtils.getBufferedWriter(this.outputDirectory + "/ITERS/it." + iteration + "/congestion.txt");
 
         try{
-            congestionWriter.write("trip_number\tvehicle_id\tperson_id\tstart_time\tend_time\tcongested_time");
-            congestionWriter.write("Number of trips to write : " + this.congestionTripsNLinks.size());
+            congestionWriter.write("DO NOT TRUST DISTANCE HERE, SEEMS TO BE WRONG\n");
+            congestionWriter.write("trip_number\tvehicle_id\tperson_id\tstart_time\tend_time\tcongested_time\ttrip_distance\n");
+            congestionWriter.write("Number of trips to write : " + this.congestionTripsNLinks.size() + "\n");
             //congestionWriter.write(vehicleToPerson.toString());
 
             int totalCongestion = 0;
             int numberOfTrips = 0;
-            for(Map.Entry<Id<Vehicle>, ArrayList<ArrayList<CongElemData>>> entry : this.congestionTripsNLinks.entrySet()){
-                //Trips
-                ArrayList<ArrayList<CongElemData>> trips = entry.getValue();
+            ArrayList<TripData> tripData = new ArrayList<>();
 
+            for(Map.Entry<Id<Vehicle>, ArrayList<ArrayList<CongElemData>>> entry : this.congestionTripsNLinks.entrySet()){
+                ArrayList<ArrayList<CongElemData>> trips = entry.getValue();    //Trips
                 for(ArrayList<CongElemData> trip : trips){
                     numberOfTrips += 1;
 
                     double congestionForThisTrip = 0;
                     double endTime = 0;
+                    double tripDistance = 0;
                     //congestionForThisTrip = n.stream().mapToDouble(i -> i.excessTravelTime).sum();
                     for(CongElemData linkData : trip){
                         Double congestedTime = linkData.excessTravelTime;
@@ -242,18 +257,70 @@ public class CongestionDetectionEventHandler implements
                                 endTime = endTimeLoc;
                             }
                         }
+
+                        if(linkData.length != null){
+                            tripDistance += linkData.length;
+                        }
                     }
                     totalCongestion += congestionForThisTrip;
 
                     double startTime = trip.get(0).timeEntered;
-                    //double endTime = trip.get(trip.size() - 1).timeExited;
 
-                    congestionWriter.write(String.format(
+                    /*congestionWriter.write(String.format(
                             "%s\t%s\t%s\t%s\t%s\t%s\n",
-                            numberOfTrips, entry.getKey(), vehicleToPerson.get(entry.getKey()), startTime, endTime, congestionForThisTrip
-                    ));
+                            numberOfTrips, entry.getKey(), vehicleToPerson.get(entry.getKey()), startTime, endTime, congestionForThisTrip, tripDistance
+                    ));*/
+
+                    //Collect trip data
+                    tripData.add(new TripData(
+                            numberOfTrips, entry.getKey(), vehicleToPerson.get(entry.getKey()), startTime, endTime, congestionTime, tripDistance));
                 }
             }
+
+            //A first comparator, sorts be trip distance
+            //https://www.codebyamir.com/blog/sort-list-of-objects-by-field-java
+            /*Collections.sort(tripData, new Comparator<TripData>() {
+                @Override
+                public int compare(TripData o1, TripData o2) {
+                    return (int)(o1.trip_distance - o2.trip_distance);
+                }
+            });*/
+
+            Map<Integer, Double> tripDurations = new HashMap<>();
+            Map<Integer, Double> tripCongestion = new HashMap<>();
+            Map<Integer, Double> tripDistances = new HashMap<>();
+
+            for(int q = 0; q < tripData.size(); q++){
+                TripData trip = tripData.get(q);
+                congestionWriter.write(String.format(
+                        "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                        trip.trip_number, trip.vehicle_id, trip.person_id, trip.start_time, trip.end_time, trip.congested_time, trip.trip_distance
+                ));
+
+                tripDurations.put(q, trip.end_time - trip.start_time);
+                tripCongestion.put(q,trip.congested_time);
+                tripDistances.put(q, trip.trip_distance);
+            }
+
+            //Write charts
+            XYLineChart chartsAll = new XYLineChart("Trip Data","Trip","Trip Number");
+            chartsAll.addSeries("Durations", tripDurations);
+            chartsAll.addSeries("Congestion", tripCongestion);
+            chartsAll.addSeries("Distance", tripDistances);
+            chartsAll.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsMeAll.png", 1920, 1080);
+
+            XYLineChart chartsCongDur = new XYLineChart("Trip Duration","Trip","Trip Number");
+            chartsCongDur.addSeries("Congestion", tripCongestion);
+            chartsCongDur.addSeries("Duration", tripDurations);
+            chartsCongDur.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsConDur.png", 1920, 1080);
+
+            XYLineChart chartsCong = new XYLineChart("Trip Congestion","Trip","Congestion (seconds)");
+            chartsCong.addSeries("Congestion", tripCongestion);
+            chartsCong.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsCong.png", 1920, 1080);
+
+            XYLineChart chartsDist = new XYLineChart("Trip Distance","Trip","Distance (meters)");
+            chartsDist.addSeries("Distance", tripDistances);
+            chartsDist.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsDist.png", 1920, 1080);
 
             //Write average congestion for iteration
             congestionWriter.write("Number of trips : " + numberOfTrips + "\n");
