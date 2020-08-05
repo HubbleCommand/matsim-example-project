@@ -23,6 +23,25 @@ public final class SimpleReservationLeastCostPathCalculator implements LeastCost
         this.pathCalculator = leastCostPathCalculator;
     }
 
+    public Path tentativePathCalculation(Node fromNode, Node toNode, double starttime, Person person, Vehicle vehicle){
+        Path path = pathCalculator.calcLeastCostPath(fromNode, toNode, starttime, person, vehicle);
+
+        //Reserve path here before returning it
+        double timeToBeElapsed = 0;
+
+        for(Link link : path.links) {
+            double currentLinkTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
+            double currentLinkExitTime = timeToBeElapsed + currentLinkTime;
+            //ReservationManager.getInstance().makeReservation(timeToBeElapsed, currentLinkExitTime, link);
+            timeToBeElapsed += currentLinkTime;
+
+            //logger.warn("Reserved link " + link.getId() + " at time " + timeToBeElapsed + "\n");
+        }
+        //pathsCalculated ++;
+
+        return path;
+    }
+
     @Override
     public Path calcLeastCostPath(Node fromNode, Node toNode, double starttime, Person person, Vehicle vehicle) {
         Path path = pathCalculator.calcLeastCostPath(fromNode, toNode, starttime, person, vehicle);
@@ -37,6 +56,7 @@ public final class SimpleReservationLeastCostPathCalculator implements LeastCost
         }*/
 
         //FIXME issue seems to be here, time is WAY to small (for example reserve at 0.02 seconds)
+        //TODO move to routing module, that is where it makes the most sense
         for(Link link : path.links) {
             //double currentLinkTime = timeToBeElapsed + (link.getFreespeed() / link.getLength());
             double currentLinkTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
