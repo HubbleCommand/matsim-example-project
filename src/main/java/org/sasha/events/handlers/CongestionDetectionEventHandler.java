@@ -214,7 +214,7 @@ public class CongestionDetectionEventHandler implements
         try{
             congestionWriter.write("trip_number\tvehicle_id\tperson_id\tstart_time\tend_time\tcongested_time");
             congestionWriter.write("Number of trips to write : " + this.congestionTripsNLinks.size());
-            congestionWriter.write(vehicleToPerson.toString());
+            //congestionWriter.write(vehicleToPerson.toString());
 
             int totalCongestion = 0;
             int numberOfTrips = 0;
