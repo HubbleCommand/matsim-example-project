@@ -33,19 +33,19 @@ import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 import scala.Int;
 
 /**
- * This EventHandler implementation counts the travel time of
- * all agents and provides the average travel time per
- * agent.
+ * This EventHandler implementation counts the travel time of all agents
+ * and provides the average travel time per agent.
  * Actually, handling Departures and Arrivals should be sufficient for this (may 2014)
  * @author dgrether
  * @author sasha / HubbleCommand for the writeChart, handling values for each iteration and average per plan
  *
  * To register events: addEventHandlerBinding().toInstance( new CongestionDetectionEventHandler( scenario.getNetwork() )  )
  * To register controller events: addControlerListenerBinding().toInstance(new CongestionDetectionEventHandler(scenario.getNetwork()));
- * TODO: be able to write iteration data to charts (need data class intermediary)
+ *
  * FIXME doesn't do anything for iteration 0
  */
 
+@Deprecated //Fixme I don't think this works unfortunately
 public class CongestionDetectionEventHandler implements
         LinkEnterEventHandler, LinkLeaveEventHandler, PersonArrivalEventHandler, PersonDepartureEventHandler, IterationEndsListener {
     private static final Logger logger = Logger.getLogger(CongestionDetectionEventHandler.class);
@@ -222,12 +222,13 @@ public class CongestionDetectionEventHandler implements
 
     public void writeIterationResults(int iteration){
         //Write trip congestion results for this iteration
-        BufferedWriter congestionWriter = IOUtils.getBufferedWriter(this.outputDirectory + "/ITERS/it." + iteration + "/congestion.txt");
+        BufferedWriter congestionWriter = IOUtils.getBufferedWriter(this.outputDirectory + "/ITERS/it." + iteration + "/congestion.csv");
 
         try{
             congestionWriter.write("DO NOT TRUST DISTANCE HERE, SEEMS TO BE WRONG\n");
             congestionWriter.write("trip_number\tvehicle_id\tperson_id\tstart_time\tend_time\tcongested_time\ttrip_distance\n");
-            congestionWriter.write("Number of trips to write : " + this.congestionTripsNLinks.size() + "\n");
+            //FIXME this doesn't output the right value, although the correct number of plans is written
+            // congestionWriter.write("Number of trips to write : " + this.congestionTripsNLinks.size() + "\n");
             //congestionWriter.write(vehicleToPerson.toString());
 
             int totalCongestion = 0;
@@ -273,7 +274,11 @@ public class CongestionDetectionEventHandler implements
 
                     //Collect trip data
                     tripData.add(new TripData(
-                            numberOfTrips, entry.getKey(), vehicleToPerson.get(entry.getKey()), startTime, endTime, congestionTime, tripDistance));
+                            numberOfTrips, entry.getKey(), vehicleToPerson.get(entry.getKey()), startTime, endTime, congestionForThisTrip, tripDistance));
+
+                    /*if(congestionForThisTrip / (endTime - startTime) > 0.5){
+                        throw new RuntimeException("HOW IS HALF OF THE TIME SPENT IN CONGESTION LOOK INTO");
+                    }*/
                 }
             }
 
@@ -286,6 +291,7 @@ public class CongestionDetectionEventHandler implements
                 }
             });*/
 
+            Map<Integer, Double> tripCongestionFraction = new HashMap<>();
             Map<Integer, Double> tripDurations = new HashMap<>();
             Map<Integer, Double> tripCongestion = new HashMap<>();
             Map<Integer, Double> tripDistances = new HashMap<>();
@@ -293,13 +299,14 @@ public class CongestionDetectionEventHandler implements
             for(int q = 0; q < tripData.size(); q++){
                 TripData trip = tripData.get(q);
                 congestionWriter.write(String.format(
-                        "%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+                        "%s,%s,%s,%s,%s,%s,%s\n",
                         trip.trip_number, trip.vehicle_id, trip.person_id, trip.start_time, trip.end_time, trip.congested_time, trip.trip_distance
                 ));
 
                 tripDurations.put(q, trip.end_time - trip.start_time);
                 tripCongestion.put(q,trip.congested_time);
                 tripDistances.put(q, trip.trip_distance);
+                tripCongestionFraction.put(q, trip.congested_time / (trip.end_time - trip.start_time));
             }
 
             //Write charts
@@ -309,17 +316,22 @@ public class CongestionDetectionEventHandler implements
             chartsAll.addSeries("Distance", tripDistances);
             chartsAll.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsMeAll.png", 1920, 1080);
 
-            XYLineChart chartsCongDur = new XYLineChart("Trip Duration","Trip","Trip Number");
+            XYLineChart chartsCongDur = new XYLineChart("Trip Duration","Trip","Time (seconds)");
             chartsCongDur.addSeries("Congestion", tripCongestion);
-            chartsCongDur.addSeries("Duration", tripDurations);
+            chartsCongDur.addSeries("Duration of trip", tripDurations);
             chartsCongDur.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsConDur.png", 1920, 1080);
 
-            XYLineChart chartsCong = new XYLineChart("Trip Congestion","Trip","Congestion (seconds)");
+            XYLineChart chartsCong = new XYLineChart("Trip Congestion","Trip","Time (seconds)");
             chartsCong.addSeries("Congestion", tripCongestion);
+            chartsCong.addSeries("Fraction of congestion", tripCongestionFraction);
             chartsCong.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsCong.png", 1920, 1080);
 
+            XYLineChart chartsCongFrac = new XYLineChart("Trip Congestion","Trip","Time (seconds)");
+            chartsCongFrac.addSeries("Fraction of congestion", tripCongestionFraction);
+            chartsCongFrac.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsCongFract.png", 1920, 1080);
+
             XYLineChart chartsDist = new XYLineChart("Trip Distance","Trip","Distance (meters)");
-            chartsDist.addSeries("Distance", tripDistances);
+            chartsDist.addSeries("Distance of trip", tripDistances);
             chartsDist.saveAsPng(this.outputDirectory + "/ITERS/it." + iteration + "/statsDist.png", 1920, 1080);
 
             //Write average congestion for iteration
@@ -327,6 +339,10 @@ public class CongestionDetectionEventHandler implements
             congestionWriter.write("Total time spent in congestion : " + totalCongestion + "\n");
             if(numberOfTrips != 0){
                 congestionWriter.write("Average congestion per trip : " + (totalCongestion / numberOfTrips) + "\n");
+                //double totalTimeA = tripDurations.values().stream().reduce(0.0, (a, b) -> a + b);
+                //double totalCongestionA = tripCongestion.values()
+                double totalFractionCongestion = tripCongestionFraction.values().stream().reduce(0.0, (a, b) -> a + b);
+                congestionWriter.write("Average congestion fraction per trip : " + (totalFractionCongestion / tripCongestionFraction.size()) + "\n");
             }
 
             congestionWriter.close();
