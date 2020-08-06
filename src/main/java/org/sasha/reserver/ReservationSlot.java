@@ -19,8 +19,6 @@ public class ReservationSlot {
     private int slot;
     //private HashMap<Link, Integer> reservations; //Maps the link to the number of reservations
     private HashMap<Id<Link>, Integer> reservations2;
-    //TODO: use Link or LinkImpl?
-    //FIXME determine if use Link or Id<Link>, Need getID()
 
     public ReservationSlot(){
         //reservations = new HashMap<Link, Integer>();
@@ -72,7 +70,7 @@ public class ReservationSlot {
 
     public void makeReservation(Link link){
         //TODO Look at CongestionDetector ln 115 with Id.create()!
-        //TODO may not need Id.create() as getting id on link for Id<Link>, but make sure!
+        // may not need Id.create() as getting id on link for Id<Link>, but make sure!
         /*
         if(reservations.containsKey(link)){
             reservations.put(link, reservations.get(link) + 1);

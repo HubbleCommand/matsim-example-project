@@ -29,8 +29,6 @@ public class SimpleReservationRoutingModuleProvider implements Provider<RoutingM
     public RoutingModule get() {
         //Use a default TravelTime thingy.
         //I have nothing to add in how travel times are calculated
-        //Or do I based on reservation?
-        //TODO check if work on time level as well
         //matsim\src\main\java\org\matsim\core\trafficmonitoring\FreeSpeedTravelTime.java
         return new SimpleReservationRoutingModule(
                 /*//new FreeSpeedTravelTime(),

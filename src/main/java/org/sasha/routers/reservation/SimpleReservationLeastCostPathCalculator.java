@@ -49,13 +49,12 @@ public final class SimpleReservationLeastCostPathCalculator implements LeastCost
         //Reserve path here before returning it
         double timeToBeElapsed = 0;
         //TODO remove, this wasn't the issue with reservations
-        //FIXME this is actually wrong anyways, of the from & to node are the same, then there will probably be no path calculated
+        // this is actually wrong anyways, of the from & to node are the same, then there will probably be no path calculated
         //Actually, verify the generated Geneva population as this error is thrown by them.
         /*if(path.links.size() == 0){
             throw new RuntimeException("WHAT HOW THE HELL IS THERE NO LINKS IN THE PATH HERE");
         }*/
 
-        //FIXME issue seems to be here, time is WAY to small (for example reserve at 0.02 seconds)
         //TODO move to routing module, that is where it makes the most sense
         for(Link link : path.links) {
             //double currentLinkTime = timeToBeElapsed + (link.getFreespeed() / link.getLength());

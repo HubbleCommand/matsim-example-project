@@ -16,7 +16,8 @@ import org.matsim.core.scenario.ScenarioUtils;
  *      https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/population/reducePopulationToAreaOfInterest/RunReducePopulationToAreaOfInterestExample.java
  */
 //FIXME always has null pointer exception, no point using, just use GUI tool for population sample
-//FIXME Appears to need a start link for the routes! (and then probably an end link)
+// Appears to need a start link for the routes! (and then probably an end link)
+
 //The MATSim tools in the GUI has the same requirements... wah
 //Hell even when using this & the MATSim GUI tools it STILL doesn't work. What fun! Need to do it in my tool
 

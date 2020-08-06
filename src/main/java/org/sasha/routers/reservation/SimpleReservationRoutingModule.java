@@ -63,7 +63,7 @@ import org.sasha.reserver.ReservationManager;
  * Look at following classes for clues:
  *      Dijkstra
  */
-//TODO finish
+
 public class SimpleReservationRoutingModule implements RoutingModule {
     public static final String MAIN_MODE = "rcar";
     private static final Logger logger = Logger.getLogger(SimpleReservationRoutingModule.class);
@@ -171,11 +171,6 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             newLeg.setRoute(route);
             newLeg.setTravelTime(0);
         }
-
-        //TODO see if can change departure time here without Strategy or whatnot that are totally not clear on how to implement?
-        //FIXME reset to departureTime
-        newLeg.setDepartureTime(departureTime);
-        //newLeg.setDepartureTime(departureTime + 10000);
 
         // FIXME this was in the example code, but IntelliJ coughs up on code analysis when committing
         //logger.warn("Finished calculating route\n");

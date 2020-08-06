@@ -71,7 +71,6 @@ public final class ReservationManager {
         return reservations.toString();
     }
 
-    //TODO need to relate the capacity in vehicles / min or whater to the time interval here
     public double getTimeInterval(){
         return this.timeInterval;
     }

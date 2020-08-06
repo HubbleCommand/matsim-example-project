@@ -30,8 +30,8 @@ import org.matsim.api.core.v01.network.Node;
  */
 public class ReservationStrategyModule implements PlanStrategyModule, ActivityEndEventHandler {
     //TODO Probably least cost path calculator here instead
-    //TODO look @ "How to write your own extension" part on ObjectAttributes and Customizable
-    //TODO as gives insights on how to work with Attributes
+    // look @ "How to write your own extension" part on ObjectAttributes and Customizable
+    // as gives insights on how to work with Attributes
     SimpleReservationLeastCostPathCalculator leastCostPathCalculator;
     SimpleReservationRoutingModule routingModule;
 
@@ -101,7 +101,7 @@ public class ReservationStrategyModule implements PlanStrategyModule, ActivityEn
                     Node toNode = NetworkUtils.getNearestLink(net, nextActivity.getCoord()).getToNode();
 
                     //TODO if least cost calculated route for this time is too high, or if there are lots of links that are
-                    //TODO oversaturated, then need to try to calculate routes for slightly different times
+                    // oversaturated, then need to try to calculate routes for slightly different times
                     //betweenActivities.getMode()
                     //NOTE: don't use calcLeastCostPath, as this reserves the route!
                     LeastCostPathCalculator.Path path = leastCostPathCalculator.tentativePathCalculation(
