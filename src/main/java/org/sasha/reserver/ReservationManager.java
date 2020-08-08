@@ -1,9 +1,12 @@
 package org.sasha.reserver;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Person;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 //Look at the ReservationSlot class for more useful links
 public final class ReservationManager {
@@ -67,12 +70,30 @@ public final class ReservationManager {
         }
     }
 
+    public int getReservationsSum(){
+        int reservationSum = 0;
+        for(Map.Entry<Integer, ReservationSlot> entry : reservations.entrySet()){
+            reservationSum += entry.getValue().getReservationsSum();
+        }
+        return reservationSum;
+    }
+
     public String getReservations(){
         return reservations.toString();
     }
 
+    public HashMap<Integer, ReservationSlot> getSlots(){
+        return this.reservations;
+    }
+
     public double getTimeInterval(){
         return this.timeInterval;
+    }
+
+    public void removeReservationsForPerson(Id<Person> person){
+        for(Map.Entry<Integer, ReservationSlot> slot : reservations.entrySet()){
+            slot.getValue().removePersonReservations(person);
+        }
     }
 
     //Used to clear the reservations at the end of an iteration

@@ -2,6 +2,7 @@ package org.sasha.reserver;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Link;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.ArrayList;
@@ -20,6 +21,10 @@ public class ReservationSlot {
     //private HashMap<Link, Integer> reservations; //Maps the link to the number of reservations
     private HashMap<Id<Link>, Integer> reservations2;
 
+    //TODO use this once have thing to remove plans...
+    // who knows if this could help...
+    private HashMap<Id<Link>, ArrayList<Id<Person>>> reservations2people;
+
     public ReservationSlot(){
         //reservations = new HashMap<Link, Integer>();
         reservations2 = new HashMap<>();
@@ -30,6 +35,21 @@ public class ReservationSlot {
             put(link, 1);
         }};*/
         reservations2 = new HashMap<>(){{put(link.getId(), 1);}};
+    }
+
+    //Removes all the reservations made by a specific person
+    public void removePersonReservations(Id<Person> person){
+        for(Map.Entry<Id<Link>, ArrayList<Id<Person>>> entry : reservations2people.entrySet()){
+            entry.getValue().remove(person);
+        }
+    }
+
+    public HashMap<Id<Link>, Integer> getReservations(){
+        return this.reservations2;
+    }
+
+    public int getReservationsSum(){
+        return reservations2.values().stream().mapToInt(Integer::valueOf).sum();
     }
 
     public int getReservations(Link link){

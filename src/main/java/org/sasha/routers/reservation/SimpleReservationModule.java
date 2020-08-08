@@ -72,7 +72,7 @@ public class SimpleReservationModule extends AbstractModule {
 
     @Deprecated
     private void installProvider(){
-        addRoutingModuleBinding("car").toProvider(
+        addRoutingModuleBinding(reservationMode).toProvider(
                 new SimpleReservationRoutingModuleProvider(
                         // the module uses the trip router for the PT part.
                         // This allows to automatically adapt to user settings,
@@ -93,7 +93,7 @@ public class SimpleReservationModule extends AbstractModule {
 
     @Override
     public void install() {
-        //installProvider();
+        installProvider();
         //V0 worst, doesn't really do anything for my case
         //bindLeastCostPathCalculatorFactory().to(SimpleReservationLeastCostPathCalculatorFactory.class);
 
@@ -103,23 +103,28 @@ public class SimpleReservationModule extends AbstractModule {
         //addRoutingModuleBinding(this.reservationMode).to(SimpleReservationRoutingModule.class);
 
         //Va working
-        addRoutingModuleBinding(this.reservationMode).toInstance(new SimpleReservationRoutingModule(
+        /*addRoutingModuleBinding(this.reservationMode).toInstance(new SimpleReservationRoutingModule(
                 "car",
                 scenario.getNetwork(),
                 scenario.getPopulation().getFactory(),
                 new SimpleReservationLeastCostPathCalculator(
                         //new SimpleReservationAsTravelDisutility(),
                         //new FreeSpeedTravelTime()
-                        new DijkstraFactory().createPathCalculator(
+                        /*new DijkstraFactory().createPathCalculator(
+                                scenario.getNetwork(),
+                                new SimpleReservationAsTravelDisutility(),
+                                new FreeSpeedTravelTime())//END BLOCK COMMENT WAS HERE
+                        new AStarLandmarksFactory(1).createPathCalculator(
                                 scenario.getNetwork(),
                                 new SimpleReservationAsTravelDisutility(),
                                 new FreeSpeedTravelTime())
+                        )
                 )
                 /*new DijkstraFactory().createPathCalculator(
                         scenario.getNetwork(),
                         new SimpleReservationAsTravelDisutility(100, 1, 60),
-                        new FreeSpeedTravelTime())*/
-        ));
+                        new FreeSpeedTravelTime())//END BLOCK COMMENT WAS HERE
+        );*/
         //addEventHandlerBinding().toInstance(new ResetReservationsIterationEndsEventHandler());
         addControlerListenerBinding().toInstance(new ResetReservationsIterationEndsEventHandler());
 

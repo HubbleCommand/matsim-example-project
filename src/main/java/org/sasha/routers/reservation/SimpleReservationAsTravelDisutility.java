@@ -17,7 +17,8 @@ import org.sasha.reserver.ReservationManager;
 public class SimpleReservationAsTravelDisutility implements TravelDisutility {
     private static final Logger LOG = Logger.getLogger(SimpleReservationAsTravelDisutility.class);
     private final TravelTime travelTime;
-    private double ReservationDisutilityFactor;
+    private final double ReservationDisutilityFactor;
+    private final double FullReservationDisutilityFactor;
     private final double timeDifferenceFactor;
     private final double flowCapacityFactor;
 
@@ -25,13 +26,15 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
 
     public SimpleReservationAsTravelDisutility() {
         this.travelTime = new FreeSpeedTravelTime();
-        this.ReservationDisutilityFactor = 1000;
+        this.FullReservationDisutilityFactor = 100;
+        this.ReservationDisutilityFactor = 100;
         this.flowCapacityFactor = 1;
         this.timeDifferenceFactor = 60;
     }
 
-    public SimpleReservationAsTravelDisutility(double reservationDisutilityFactor, double flowCapacityFactor, double timeDifferenceFactor) {
+    public SimpleReservationAsTravelDisutility(double reservationDisutilityFactor, double fullReservationDisutilityFactor, double flowCapacityFactor, double timeDifferenceFactor) {
         this.ReservationDisutilityFactor = reservationDisutilityFactor;
+        this.FullReservationDisutilityFactor = fullReservationDisutilityFactor;
         this.flowCapacityFactor = flowCapacityFactor;
         this.timeDifferenceFactor = timeDifferenceFactor;
         this.travelTime = new FreeSpeedTravelTime();
@@ -46,7 +49,8 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
         capacity on the link and that they are physically blocking each other from progressing on the link.
      */
     public double calculateRelativeReservedCost(double linkCapacity, double reservedCapacity, Link link){
-        if(reservedCapacity - linkCapacity <= 0){
+        //STRICTLY smaller than zero, if zero then costs NEED TO BE INCURRED
+        if(reservedCapacity - linkCapacity < 0){
             //Returning 0 here will result in NullPointerExceptions
             return getLinkMinimumTravelDisutility(link);
         } else {
@@ -55,8 +59,12 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
 
             //Or can also use
             //(getLinkMinimumTravelDisutility(link) * ReservationDisutilityFactor) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
-            return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor);
+            return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * FullReservationDisutilityFactor);
         }
+    }
+
+    public double calculateAdvancedReservedCost(double linkCapacity, double reservedCapacity, Link link){
+        return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor);
     }
 
     public double calculateSimpleReservedCost(double linkCapacity, double reservedCapacity, Link link){
@@ -85,9 +93,9 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
             //Get the current number of reservations for the link
             double reservedCapacity = ReservationManager.getInstance().getReservations(time, link);
 
-            if(timesCalled % 100000 == 0){
+            /*if(timesCalled % 1000000 == 0){
                 LOG.warn("Link : " + link.getId() + " at time : " + time + " has reserved : " + reservedCapacity + "\n");
-            }
+            }*/
 
             //Compute cost
             return this.calculateRelativeReservedCost(linkCapacity, reservedCapacity, link);

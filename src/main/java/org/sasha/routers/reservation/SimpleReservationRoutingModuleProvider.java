@@ -3,6 +3,8 @@ package org.sasha.routers.reservation;
 import com.google.inject.Provider;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.PopulationFactory;
+import org.matsim.core.router.AStarEuclideanFactory;
+import org.matsim.core.router.AStarLandmarksFactory;
 import org.matsim.core.router.DijkstraFactory;
 import org.matsim.core.router.RoutingModule;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
@@ -47,10 +49,20 @@ public class SimpleReservationRoutingModuleProvider implements Provider<RoutingM
                 new SimpleReservationLeastCostPathCalculator(
                         //new SimpleReservationAsTravelDisutility(),
                         //new FreeSpeedTravelTime()
-                        new DijkstraFactory().createPathCalculator(
+                        /*new DijkstraFactory().createPathCalculator(
                                 network,
                                 new SimpleReservationAsTravelDisutility(),
-                                new FreeSpeedTravelTime())
+                                new FreeSpeedTravelTime())*/
+                        /*new AStarEuclideanFactory().createPathCalculator(
+                                network,
+                                new SimpleReservationAsTravelDisutility(),
+                                new FreeSpeedTravelTime()
+                        )*/
+                        new AStarLandmarksFactory(1).createPathCalculator(
+                                network,
+                                new SimpleReservationAsTravelDisutility(),
+                                new FreeSpeedTravelTime()
+                        )
                 )
         );
     }

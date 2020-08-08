@@ -133,11 +133,12 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             // (a "true" route)
             Node startNode = fromLink.getToNode(); // start at the end of the "current" link
             Node endNode = toLink.getFromNode(); // the target is the start of the link
-            //Path path = this.routeAlgo.calcLeastCostPath(startNode, endNode, departureTime, person, null);
             Path path = this.pathCalculator.calcLeastCostPath(startNode, endNode, departureTime, person, null);
 
             if (path == null)
                 throw new RuntimeException("No route found from node " + startNode.getId() + " to node " + endNode.getId() + " by mode " + this.mode + ".");
+
+            //If path has too many links that are fully reserved, then:
 
             //TODO either do reservation here or in Reservation LCPC
             //Reserve Path
@@ -152,6 +153,16 @@ public class SimpleReservationRoutingModule implements RoutingModule {
                     );
                 timeToBeElapsed += timeOnLink;
             }*/
+
+            double timeToBeElapsed = 0;
+            for(Link link : path.links) {
+                double currentLinkTraverseTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
+                double currentLinkExitTime = timeToBeElapsed + currentLinkTraverseTime;
+                ReservationManager.getInstance().makeReservation(
+                        timeToBeElapsed + departureTime, currentLinkExitTime + departureTime, link
+                );
+                timeToBeElapsed += currentLinkTraverseTime;
+            }
 
             NetworkRoute route = this.populationFactory.getRouteFactories().createRoute(NetworkRoute.class, fromLink.getId(), toLink.getId());
             route.setLinkIds(fromLink.getId(), NetworkUtils.getLinkIds(path.links), toLink.getId());
@@ -172,9 +183,20 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             newLeg.setTravelTime(0);
         }
 
+        //TODO see if can change departure time here without Strategy or whatnot that are totally not clear on how to implement?
+        //FIXME reset to departureTime
+
+        //Can create dummy activity to shift person leave time
+        //Activity newActivity = this.populationFactory.createActivityFromLinkId("waiting", fromFacility.getLinkId());
+        Activity newActivity = this.populationFactory.createActivityFromLinkId("waitingr", fromFacility.getLinkId());
+        newActivity.setEndTime(departureTime + 10000);
+
+        //Set departure time doesn't seem to do anything here...
+        newLeg.setDepartureTime(departureTime);
+
         // FIXME this was in the example code, but IntelliJ coughs up on code analysis when committing
         //logger.warn("Finished calculating route\n");
-        return Arrays.asList( newLeg );
+        return Arrays.asList( /*newActivity,*/ newLeg );
 
         /*PopulationFactory pf = scenario.getPopulation().getFactory();
         RouteFactories routeFactory = ((PopulationFactory)pf).getRouteFactories() ;

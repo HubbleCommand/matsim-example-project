@@ -46,8 +46,11 @@ public final class SimpleReservationLeastCostPathCalculator implements LeastCost
     public Path calcLeastCostPath(Node fromNode, Node toNode, double starttime, Person person, Vehicle vehicle) {
         Path path = pathCalculator.calcLeastCostPath(fromNode, toNode, starttime, person, vehicle);
 
+        //TODO FIXME see why this was set to 0
         //Reserve path here before returning it
         double timeToBeElapsed = 0;
+        //double timeToBeElapsed = starttime;
+
         //TODO remove, this wasn't the issue with reservations
         // this is actually wrong anyways, of the from & to node are the same, then there will probably be no path calculated
         //Actually, verify the generated Geneva population as this error is thrown by them.
@@ -58,19 +61,26 @@ public final class SimpleReservationLeastCostPathCalculator implements LeastCost
         //TODO move to routing module, that is where it makes the most sense
         for(Link link : path.links) {
             //double currentLinkTime = timeToBeElapsed + (link.getFreespeed() / link.getLength());
-            double currentLinkTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
+            /*double currentLinkTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
             double currentLinkExitTime = timeToBeElapsed + currentLinkTime;
             ReservationManager.getInstance().makeReservation(timeToBeElapsed, currentLinkExitTime, link);
-            timeToBeElapsed += currentLinkTime;
+            timeToBeElapsed += currentLinkTime;*/
 
-            logger.warn("Reserved link " + link.getId() + " at time " + timeToBeElapsed + "\n");
+            double currentLinkTraverseTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
+            double currentLinkExitTime = timeToBeElapsed + currentLinkTraverseTime;
+            ReservationManager.getInstance().makeReservation(
+                    timeToBeElapsed + starttime, currentLinkExitTime + starttime, link
+            );
+            timeToBeElapsed += currentLinkTraverseTime;
+
+            //logger.warn("Reserved link " + link.getId() + " at time " + timeToBeElapsed + "\n");
             /*if(pathsCalculated % 1000 == 0){
 
             }*/
         }
 
         if(pathsCalculated % 100 == 0){
-            logger.warn("Calculated " + pathsCalculated + " paths \n");
+            //logger.warn("Calculated " + pathsCalculated + " paths \n");
         }
         pathsCalculated ++;
 
