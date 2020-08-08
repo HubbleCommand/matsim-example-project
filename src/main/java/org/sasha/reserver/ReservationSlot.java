@@ -21,10 +21,6 @@ public class ReservationSlot {
     //private HashMap<Link, Integer> reservations; //Maps the link to the number of reservations
     private HashMap<Id<Link>, Integer> reservations2;
 
-    //TODO use this once have thing to remove plans...
-    // who knows if this could help...
-    private HashMap<Id<Link>, ArrayList<Id<Person>>> reservations2people;
-
     public ReservationSlot(){
         //reservations = new HashMap<Link, Integer>();
         reservations2 = new HashMap<>();
@@ -35,17 +31,6 @@ public class ReservationSlot {
             put(link, 1);
         }};*/
         reservations2 = new HashMap<>(){{put(link.getId(), 1);}};
-    }
-
-    //Removes all the reservations made by a specific person
-    public void removePersonReservations(Id<Person> person){
-        for(Map.Entry<Id<Link>, ArrayList<Id<Person>>> entry : reservations2people.entrySet()){
-            entry.getValue().remove(person);
-        }
-    }
-
-    public HashMap<Id<Link>, Integer> getReservations(){
-        return this.reservations2;
     }
 
     public int getReservationsSum(){

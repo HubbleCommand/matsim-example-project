@@ -90,12 +90,6 @@ public final class ReservationManager {
         return this.timeInterval;
     }
 
-    public void removeReservationsForPerson(Id<Person> person){
-        for(Map.Entry<Integer, ReservationSlot> slot : reservations.entrySet()){
-            slot.getValue().removePersonReservations(person);
-        }
-    }
-
     //Used to clear the reservations at the end of an iteration
     public void clearReservations(){
         reservations.clear();

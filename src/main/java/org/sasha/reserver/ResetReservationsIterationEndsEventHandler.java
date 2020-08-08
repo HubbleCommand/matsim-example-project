@@ -39,7 +39,7 @@ public class ResetReservationsIterationEndsEventHandler implements IterationEnds
     @Override
     public void reset(int iteration) {
         //Can't reset iterations here, for same reasons as above
-        //reser() does not provide the necessary data
+        //reset() does not provide the necessary data
     }
 
     @Override
