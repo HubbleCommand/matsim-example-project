@@ -19,6 +19,7 @@ import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.facilities.Facility;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -129,40 +130,16 @@ public class SimpleReservationRoutingModule implements RoutingModule {
         Gbl.assertNotNull(fromLink);
         Gbl.assertNotNull(toLink);
 
+        Path path = null;
+
         if (toLink != fromLink) {
             // (a "true" route)
             Node startNode = fromLink.getToNode(); // start at the end of the "current" link
             Node endNode = toLink.getFromNode(); // the target is the start of the link
-            Path path = this.pathCalculator.calcLeastCostPath(startNode, endNode, departureTime, person, null);
+            path = this.pathCalculator.calcLeastCostPath(startNode, endNode, departureTime, person, null);
 
             if (path == null)
                 throw new RuntimeException("No route found from node " + startNode.getId() + " to node " + endNode.getId() + " by mode " + this.mode + ".");
-
-            //If path has too many links that are fully reserved, then:
-
-            //TODO either do reservation here or in Reservation LCPC
-            //Reserve Path
-            //NOTE: departureTime is start time
-            /*double timeToBeElapsed = 0;
-            for(Link link : path.links){
-                double timeOnLink = link.getFreespeed(departureTime + timeToBeElapsed) / link.getLength();
-                ReservationManager.getInstance().makeReservation(
-                        (departureTime + timeToBeElapsed),
-                        (departureTime + timeToBeElapsed + timeOnLink),
-                        link
-                    );
-                timeToBeElapsed += timeOnLink;
-            }*/
-
-            double timeToBeElapsed = 0;
-            for(Link link : path.links) {
-                double currentLinkTraverseTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
-                double currentLinkExitTime = timeToBeElapsed + currentLinkTraverseTime;
-                ReservationManager.getInstance().makeReservation(
-                        timeToBeElapsed + departureTime, currentLinkExitTime + departureTime, link
-                );
-                timeToBeElapsed += currentLinkTraverseTime;
-            }
 
             NetworkRoute route = this.populationFactory.getRouteFactories().createRoute(NetworkRoute.class, fromLink.getId(), toLink.getId());
             route.setLinkIds(fromLink.getId(), NetworkUtils.getLinkIds(path.links), toLink.getId());
@@ -172,10 +149,10 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             newLeg.setRoute(route);
             newLeg.setTravelTime(path.travelTime);
         } else {
-            //TODO reserve?
-
             // create an empty route == staying on place if toLink == endLink
             // note that we still do a route: someone may drive from one location to another on the link. kai, dec'15
+            path = new Path(Arrays.asList(fromLink.getFromNode(), fromLink.getToNode()), Arrays.asList(fromLink), 0, 0);
+
             NetworkRoute route = this.populationFactory.getRouteFactories().createRoute(NetworkRoute.class, fromLink.getId(), toLink.getId());
             route.setTravelTime(0);
             route.setDistance(0.0);
@@ -183,16 +160,26 @@ public class SimpleReservationRoutingModule implements RoutingModule {
             newLeg.setTravelTime(0);
         }
 
-        //TODO see if can change departure time here without Strategy or whatnot that are totally not clear on how to implement?
-        //FIXME reset to departureTime
-
+        //TODO iterate over path links, if many are over reserved, then try leaving 5 minutes later
         //Can create dummy activity to shift person leave time
-        //Activity newActivity = this.populationFactory.createActivityFromLinkId("waiting", fromFacility.getLinkId());
         Activity newActivity = this.populationFactory.createActivityFromLinkId("waitingr", fromFacility.getLinkId());
         newActivity.setEndTime(departureTime + 10000);
 
-        //Set departure time doesn't seem to do anything here...
+        //Set departure time doesn't seem to do anything here... need to create dummy activity as done above
         newLeg.setDepartureTime(departureTime);
+
+        //Reserve final path
+        double timeToBeElapsed = 0;
+        for(Link link : path.links) {
+            double currentLinkTraverseTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
+            double currentLinkExitTime = timeToBeElapsed + currentLinkTraverseTime;
+            ReservationManager.getInstance().makeReservation(
+                    timeToBeElapsed + departureTime,
+                    currentLinkExitTime + departureTime,
+                    link
+            );
+            timeToBeElapsed += currentLinkTraverseTime;
+        }
 
         // FIXME this was in the example code, but IntelliJ coughs up on code analysis when committing
         //logger.warn("Finished calculating route\n");
