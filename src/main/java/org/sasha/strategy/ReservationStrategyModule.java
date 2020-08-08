@@ -8,10 +8,13 @@ import org.matsim.api.core.v01.population.*;
 import org.matsim.api.core.v01.replanning.PlanStrategyModule;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.replanning.ReplanningContext;
+import org.matsim.core.replanning.strategies.ReRoute;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.matsim.vehicles.Vehicle;
 import org.sasha.reserver.ReservationManager;
+import org.sasha.reserverV2.ReservationManagerV2;
+import org.sasha.reserverV2.ReservationSlotV2;
 import org.sasha.routers.reservation.SimpleReservationLeastCostPathCalculator;
 import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 import org.apache.log4j.Logger;
@@ -28,7 +31,7 @@ import org.matsim.api.core.v01.network.Node;
  * This might be a better example...
  * https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/strategies/multiThreadedPlanStrategy/RunWithMultithreadedModule.java
  */
-public class ReservationStrategyModule implements PlanStrategyModule, ActivityEndEventHandler {
+public class ReservationStrategyModule extends ReRoute implements PlanStrategyModule, ActivityEndEventHandler {
     //TODO Probably least cost path calculator here instead
     // look @ "How to write your own extension" part on ObjectAttributes and Customizable
     // as gives insights on how to work with Attributes
@@ -40,6 +43,12 @@ public class ReservationStrategyModule implements PlanStrategyModule, ActivityEn
     Scenario sc;
     Network net;
     Population pop;
+
+    public ReservationStrategyModule(Scenario scenario){
+        this.sc = scenario;
+        this.net = scenario.getNetwork();
+        this.pop = scenario.getPopulation();
+    }
 
     public ReservationStrategyModule(Scenario scenario,
                                      SimpleReservationLeastCostPathCalculator leastCostPathCalculator,
@@ -58,14 +67,19 @@ public class ReservationStrategyModule implements PlanStrategyModule, ActivityEn
 
     @Override
     public void prepareReplanning(ReplanningContext replanningContext) {
-
+        //replanningContext.getIteration()
+        //What even is the point of ReplanningContext? Just to get the iteration number?
     }
 
     @Override
     public void handlePlan(Plan plan) {
+        //Reset
+        ReservationManagerV2.getInstance().removeReservationsForPerson(plan.getPerson().getId());
+
+
         //plan.getPlanElements()
         int index = 0;
-        for(PlanElement planElement : plan.getPlanElements()){
+        /*for(PlanElement planElement : plan.getPlanElements()){
             Attributes attributes = planElement.getAttributes();
 
             System.out.println(attributes.toString());
@@ -73,7 +87,7 @@ public class ReservationStrategyModule implements PlanStrategyModule, ActivityEn
             //attributes.getAttribute("");
             /*for(String planAttribute : ){
                 
-            }*/
+            }//END BLOCK COMMENT HERE
             
             //routingModule.calcRoute(planElement)
 
@@ -130,7 +144,7 @@ public class ReservationStrategyModule implements PlanStrategyModule, ActivityEn
             }
 
             index++;
-        }
+        }*/
     }
 
     @Override
