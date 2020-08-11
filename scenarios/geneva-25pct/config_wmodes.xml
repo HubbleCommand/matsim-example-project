@@ -20,7 +20,7 @@
 	</module>
 
 	<module name="plans">
-		<param name="inputPlansFile" value="plansCPPwTFCT_25pct_fixed_0.3.xml" />
+		<param name="inputPlansFile" value="plansCPPwTFCT_25pct_fixed.xml" />
 	</module>
 
 	<module name="controler">
@@ -48,6 +48,8 @@
 	
 		<param name = "snapshotperiod"	value = "00:00:00"/> <!-- 00:00:00 means NO snapshot writing -->
 
+		<!--<param name="flowCapacityFactor" value="1.0" />
+		<param name="storageCapacityFactor" value="1.25" />-->
 
 	</module>
 
@@ -97,6 +99,12 @@
 
 		<param name="ModuleProbability_3" value="0.1" />
 		<param name="Module_3" value="ReRoute" />
+
+		<!--<param name="ModuleProbability_1" value="0.9" />
+		<param name="Module_1" value="BestScore" />
+
+		<param name="ModuleProbability_2" value="0.1" />
+		<param name="Module_2" value="ReRoute" />-->
 	</module>
 
 	<!-- Added for randomly changing departure times for activities -->

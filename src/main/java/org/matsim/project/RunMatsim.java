@@ -19,33 +19,22 @@
 package org.matsim.project;
 
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.decongestion.DecongestionAnalysisModule;
+import org.matsim.contrib.decongestion.DecongestionConfigGroup;
 import org.matsim.contrib.otfvis.OTFVisLiveModule;
-import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.events.EventsUtils;
-import org.matsim.core.events.MatsimEventsReader;
-import org.matsim.core.events.handler.EventHandler;
+import org.matsim.core.replanning.StrategyManager;
+import org.matsim.core.replanning.StrategyManagerModule;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.run.RunBerlinScenario;
 import org.sasha.events.handlers.CongestionDetectionEventHandler;
-import org.sasha.reserver.ResetReservationsIterationEndsEventHandler;
+import org.sasha.reserverV2.TestReset;
 import org.sasha.routers.reservation.*;
-
-
-import com.google.inject.Key;
-import com.google.inject.name.Names;
-import org.matsim.api.core.v01.TransportMode;
-import org.matsim.core.router.MainModeIdentifier;
-import org.matsim.core.router.MainModeIdentifierImpl;
-import org.matsim.core.router.RoutingModule;
-
-import java.util.Map;
+import org.sasha.strategy.ReservationStrategyManagerProvider;
 //If need ExamplesUtils, just hover over it so that IntelliJ can automatically import it through Maven
 //import org.matsim.examples.ExamplesUtils;
 
@@ -108,6 +97,17 @@ public class RunMatsim{
 		Scenario scenario = ScenarioUtils.loadScenario(config) ;
 		// possibly modify scenario here
 
+		//Randomly set person mode
+		//Doing this in Python as this is just too uncertain
+		/*scenario.getPopulation().getPersons().forEach((k , v) ->{
+			v.getSelectedPlan().getPlanElements().forEach(item -> {
+				if(item instanceof Activity){
+					item.getAttributes().
+				}
+			});
+		});*/
+
+
 		//Try to get the # of plans, but this has to be done with events, as plans may change per iteration with replanning!
 		/*for(Map.Entry p: scenario.getPopulation().getPersons().entrySet()) {		p.getValue();	}*/
 
@@ -121,8 +121,42 @@ public class RunMatsim{
 			}
 		});
 
+		//Install officiel congestion analyser
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				//this.bind(DelayAnalysis.class).asEagerSingleton();
+				//this.addEventHandlerBinding().to(DelayAnalysis.class);
+				this.bind(DecongestionConfigGroup.class).asEagerSingleton();
+			}
+		});
+		//To use this, need to bind DecongestionConfigGroup like above
+		controler.addOverridingModule(new DecongestionAnalysisModule());
+		//controler.addOverridingModule(new DecongestionModule());
+
+		//Install strategies
+		//controler.addOverridingModule(new StrategyManagerModule());
+		/*controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				//this.addPlanStrategyBinding().t;
+				//this.
+				//ReRoute.class.notifyAll();
+				bind(StrategyManager.class).toProvider(new ReservationStrategyManagerProvider(
+					scenario
+				));
+			}
+		});*/
+
+		controler.addOverridingModule(new AbstractModule() {
+			@Override
+			public void install() {
+				this.addControlerListenerBinding().toInstance(new TestReset());
+			}
+		});
+
 		//Install my own module
-		//controler.addOverridingModule(new SimpleReservationModule(config, controler, scenario, "car"));
+		controler.addOverridingModule(new SimpleReservationModule(config, controler, scenario, "rcar"));
 		System.out.println("Installed my module !");
 
 

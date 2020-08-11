@@ -12,13 +12,13 @@
 	</module>
 
 	<module name="plans">
-		<param name="inputPlansFile" value="plans100.xml" />
+		<param name="inputPlansFile" value="plans100-no-route-fixed.xml" />
 	</module>
 
 	<module name="controler">
 		<param name="outputDirectory" value="./output" />
 		<param name="firstIteration" value="0" />
-		<param name="lastIteration" value="10" />
+		<param name="lastIteration" value="5" />
 	</module>
 
 	<module name="qsim">
@@ -54,6 +54,14 @@
 		<param name="activityLatestStartTime_1" value="09:00:00" />
 		<param name="activityEarliestEndTime_1" value="" />
 		<param name="activityClosingTime_1"     value="18:00:00" />
+
+		<parameterset type="activityParams" >
+			<param name="activityType" value="waitingr" />
+			<param name="minimalDuration" value="00:01:00" />
+			<param name="typicalDuration" value="00:20:00" />
+			<param name="priority" value="1.0" />
+		</parameterset>
+		<param name="traveling_waiting" value="-6"/>
 	</module>
 	
 	<module name="strategy">

@@ -9,17 +9,17 @@
 
 	<module name="network">
 		<!--<param name="inputNetworkFile" value="network.xml" />-->
-		<param name="inputNetworkFile" value="network_detailed_cleaned.xml" />
+		<param name="inputNetworkFile" value="network_clean_coordtransf_wmodes.xml" />
 	</module>
 
 	<module name="plans">
-		<param name="inputPlansFile" value="plans.xml" />
+		<param name="inputPlansFile" value="plansCPPwTFCT.xml" />
 	</module>
 
 	<module name="controler">
 		<param name="outputDirectory" value="./output" />
 		<param name="firstIteration" value="0" />
-		<param name="lastIteration" value="10" />
+		<param name="lastIteration" value="5" />
 	</module>
 
 	<module name="qsim">

@@ -64,8 +64,12 @@ public class ReservationSlot {
                 //Cannot be insantiated or equal null, so threw NullPointerException!
                 //TODO clean code
                 if(reservations2.containsKey(link.getId())){
-                    int reservationsForLink = reservations2.get(link.getId());
-                    return reservationsForLink;
+                    Integer reservationsForLink = reservations2.get(link.getId());
+                    if(reservationsForLink == null){
+                        return 0;
+                    } else {
+                        return reservationsForLink;
+                    }
                 } else {
                     return 0;
                 }
@@ -74,6 +78,18 @@ public class ReservationSlot {
     }
 
     public void makeReservation(Link link){
+        /*
+        try{
+            if(link == null || reservations2 == null){return;}   //Null check, strange as this was only thrown in the 0.6 scenario.
+            if(reservations2.containsKey(link.getId())){
+                reservations2.put(link.getId(), reservations2.get(link.getId()) + 1);
+            } else {
+                reservations2.put(link.getId(), 1);
+            }
+        } catch (NullPointerException e){
+            return;
+        }
+        * */
         //TODO Look at CongestionDetector ln 115 with Id.create()!
         // may not need Id.create() as getting id on link for Id<Link>, but make sure!
         /*
@@ -82,12 +98,25 @@ public class ReservationSlot {
         } else {
             reservations.put(link, 1);
         }*/
+        if(link == null || reservations2 == null){return;}   //Null check, strange as this was only thrown in the 0.6 scenario.
         if(reservations2.containsKey(link.getId())){
-            reservations2.put(link.getId(), reservations2.get(link.getId()) + 1);
+            Integer currentReservations = reservations2.get(link.getId());
+            if(currentReservations != null){
+                reservations2.put(link.getId(),  currentReservations + 1);
+            } else {
+                reservations2.put(link.getId(),  1);
+            }
+            //reservations2.put(link.getId(), reservations2.get(link.getId()) + 1);
         } else {
             reservations2.put(link.getId(), 1);
         }
     }
+    /*
+    Integer currentReservations = reservations2.get(link.getId());
+            if(currentReservations != null){
+                reservations2.put(link.getId(),  currentReservations + 1);
+            }
+     */
 
     @Override
     public String toString() {

@@ -75,7 +75,7 @@ public class ReservationStrategyManagerProvider implements Provider<StrategyMana
 
         PlanStrategy strategy2 = new PlanStrategyImpl.Builder(new BestPlanSelector<>())
                 .addStrategyModule(new ReservationStrategyModule(this.sc))
-                .addStrategyModule(new ReRoute(sc, ))
+                //.addStrategyModule(new ReRoute(sc, ))
                 .build();
         //manager.addStrategy(strategy1, );
         manager.addStrategyForDefaultSubpopulation(strategy1, 0.9);
