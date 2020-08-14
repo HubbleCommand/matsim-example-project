@@ -39,6 +39,7 @@ import org.matsim.core.replanning.modules.ReRoute;
 import org.matsim.core.replanning.selectors.BestPlanSelector;
 import org.matsim.core.replanning.selectors.ExpBetaPlanSelector;
 import org.matsim.core.replanning.selectors.RandomPlanSelector;
+import org.matsim.core.router.TripRouter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.charts.XYScatterChart;
 //import org.matsim.core.utils.misc.OptionalTime;
@@ -51,6 +52,7 @@ import org.matsim.core.utils.charts.XYScatterChart;
  *      BetaTravelTest6IT.java
  */
 public class ReservationStrategyManagerProvider implements Provider<StrategyManager> {
+    @Inject private Provider<TripRouter> tripRouterProvider;
     private Scenario sc;
 
     public ReservationStrategyManagerProvider(Scenario sc){
@@ -62,23 +64,24 @@ public class ReservationStrategyManagerProvider implements Provider<StrategyMana
         StrategyManager manager = new StrategyManager();
         manager.setMaxPlansPerAgent(5);
 
-        //Strategy 1 : choose best plan
-        //PlanStrategyImpl strategy1 = new PlanStrategyImpl(new BestPlanSelector<>());
-        //PlanStrategyImpl strategy1 = PlanStrategyImpl.Builder
-        /*PlanStrategyImpl.Builder strategy1 = new PlanStrategyImpl.Builder(new BestPlanSelector<>());
-        strategy1.addStrategyModule(new ReservationStrategyModule(sc));*/
-        PlanStrategy strategy1 = new PlanStrategyImpl.Builder(new BestPlanSelector<>())
-                //NO! Don't want to reset reservations here! Only when rerouting or changing time!
-                //.addStrategyModule(new ReservationStrategyModule(this.sc))
-                //.addStrategyModule(new BestPlanSelector<String, String>())
+        //Strategy 0 for removing person's reservations
+        PlanStrategy strategy0 = new PlanStrategyImpl.Builder(new BestPlanSelector<>())
+                .addStrategyModule(new ReservationResetStrategyModule())    //First, reset reservations
+                .addStrategyModule(new ReRoute(sc, tripRouterProvider))     //Then can reroute the person!
                 .build();
 
-        PlanStrategy strategy2 = new PlanStrategyImpl.Builder(new BestPlanSelector<>())
-                .addStrategyModule(new ReservationStrategyModule(this.sc))
-                //.addStrategyModule(new ReRoute(sc, ))
+        //Strategy 1 for choosing best plan
+        PlanStrategy strategy1 = new PlanStrategyImpl.Builder(new BestPlanSelector<>())
                 .build();
-        //manager.addStrategy(strategy1, );
-        manager.addStrategyForDefaultSubpopulation(strategy1, 0.9);
+
+        //Add strategies
+            //Depreciated methods
+        //manager.addStrategyForDefaultSubpopulation(strategy0, 0.1);
+        //manager.addStrategyForDefaultSubpopulation(strategy1, 0.9);
+
+        manager.addStrategy(strategy0, null, 0.1);
+        manager.addStrategy(strategy1, null, 0.9);
+
 
         /*// strategy1
         PlanStrategy strategy1 = new PlanStrategy(new KeepSelected());

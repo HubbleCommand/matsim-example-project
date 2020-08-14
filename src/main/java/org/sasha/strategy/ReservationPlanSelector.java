@@ -14,7 +14,7 @@ public class ReservationPlanSelector implements PlanSelector<Plan, Person>, Acti
 
     @Override
     public Plan selectPlan(HasPlansAndId<Plan, Person> person) {
-        log.error("calling selectPlan: PesonId: " + person.getId() + " Returning first Plan") ;
+        log.warn("calling selectPlan: PesonId: " + person.getId() + " Returning first Plan") ;
 
         //Return first plan. This is because the current setup only has one plan per person
         return person.getPlans().get(0);
@@ -27,6 +27,6 @@ public class ReservationPlanSelector implements PlanSelector<Plan, Person>, Acti
 
     @Override
     public void reset(int iteration) {
-        log.error("calling reset") ;
+        log.warn("calling reset") ;
     }
 }

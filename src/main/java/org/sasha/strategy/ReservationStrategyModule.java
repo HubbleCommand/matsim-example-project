@@ -73,10 +73,6 @@ public class ReservationStrategyModule extends ReRoute implements PlanStrategyMo
 
     @Override
     public void handlePlan(Plan plan) {
-        //Reset
-        ReservationManagerV2.getInstance().removeReservationsForPerson(plan.getPerson().getId());
-
-
         //plan.getPlanElements()
         int index = 0;
         /*for(PlanElement planElement : plan.getPlanElements()){

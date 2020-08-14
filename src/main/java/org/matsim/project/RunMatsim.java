@@ -34,6 +34,7 @@ import org.matsim.run.RunBerlinScenario;
 import org.sasha.events.handlers.CongestionDetectionEventHandler;
 import org.sasha.reserverV2.TestReset;
 import org.sasha.routers.reservation.*;
+import org.sasha.strategy.ReservationResetStrategyProvider;
 import org.sasha.strategy.ReservationStrategyManagerProvider;
 //If need ExamplesUtils, just hover over it so that IntelliJ can automatically import it through Maven
 //import org.matsim.examples.ExamplesUtils;
@@ -84,13 +85,12 @@ public class RunMatsim{
 	public void runMATSimSampleScenario(String[] args){
 		Config config;
 		if ( args==null || args.length==0 || args[0]==null ){
-			config = ConfigUtils.loadConfig( "scenarios/equil/config.xml" );
+			config = ConfigUtils.loadConfig( "scenarios/geneva-10pct/config_wmodes.xml" );
 		} else {
 			config = ConfigUtils.loadConfig( args );
 		}
 		config.controler().setOverwriteFileSetting( OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists );
 		// possibly modify config here
-		config.qsim().getFlowCapFactor();	//TODO use for Disutility Function!!!
 
 		config.getModules();
 
@@ -114,14 +114,14 @@ public class RunMatsim{
 		Controler controler = new Controler( scenario ) ;
 
 		//Install other stuffs
-		controler.addOverridingModule(new AbstractModule() {
+		/*controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
 				addEventHandlerBinding().toInstance(new CongestionDetectionEventHandler(scenario.getNetwork(), config.controler().getOutputDirectory()));
 			}
-		});
+		});*/
 
-		//Install officiel congestion analyser
+		//Install official congestion analyser
 		controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
@@ -145,20 +145,30 @@ public class RunMatsim{
 				bind(StrategyManager.class).toProvider(new ReservationStrategyManagerProvider(
 					scenario
 				));
+				//this.addPlanStrategyBinding("ReRoute").toProvider(new ReservationResetStrategyProvider(scenario));
 			}
 		});*/
 
-		controler.addOverridingModule(new AbstractModule() {
+		/*controler.addOverridingModule(new AbstractModule() {
 			@Override
 			public void install() {
 				this.addControlerListenerBinding().toInstance(new TestReset());
 			}
-		});
+		});*/
+
+		int networkSize 	= scenario.getNetwork().getLinks().size();			//Network size
+		int populationSite 	= scenario.getPopulation().getPersons().size();		//Population size
 
 		//Install my own module
-		controler.addOverridingModule(new SimpleReservationModule(config, controler, scenario, "rcar"));
+		controler.addOverridingModule(new SimpleReservationModule(
+				config,
+				controler,
+				scenario,
+				"rcar",
+				config.qsim().getFlowCapFactor())	//Use current flow capacity factor
+		);
 		System.out.println("Installed my module !");
-
+		System.out.println("Flow capacity factor : " + config.qsim().getFlowCapFactor());
 
 		//Add this if want OTFVis live view thingy while simulation runs
 		//Can also just ask OTFVis to not sync in the interface
