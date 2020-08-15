@@ -9,17 +9,13 @@ import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.events.LinkEnterEvent;
-import org.matsim.api.core.v01.events.LinkLeaveEvent;
-import org.matsim.api.core.v01.events.PersonArrivalEvent;
-import org.matsim.api.core.v01.events.PersonDepartureEvent;
-import org.matsim.api.core.v01.events.handler.LinkEnterEventHandler;
-import org.matsim.api.core.v01.events.handler.LinkLeaveEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonArrivalEventHandler;
-import org.matsim.api.core.v01.events.handler.PersonDepartureEventHandler;
+import org.matsim.api.core.v01.events.*;
+import org.matsim.api.core.v01.events.handler.*;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.api.experimental.events.VehicleDepartsAtFacilityEvent;
+import org.matsim.core.api.experimental.events.handler.VehicleDepartsAtFacilityEventHandler;
 import org.matsim.core.controler.events.IterationEndsEvent;
 import org.matsim.core.controler.events.ShutdownEvent;
 import org.matsim.core.controler.events.StartupEvent;
@@ -47,7 +43,13 @@ import scala.Int;
 
 @Deprecated //Fixme I don't think this works unfortunately
 public class CongestionDetectionEventHandler implements
-        LinkEnterEventHandler, LinkLeaveEventHandler, PersonArrivalEventHandler, PersonDepartureEventHandler, IterationEndsListener {
+        LinkEnterEventHandler,
+        LinkLeaveEventHandler,
+        PersonArrivalEventHandler,
+        PersonDepartureEventHandler,
+        IterationEndsListener,
+        VehicleEntersTrafficEventHandler,
+        VehicleDepartsAtFacilityEventHandler {
     private static final Logger logger = Logger.getLogger(CongestionDetectionEventHandler.class);
     private ArrayList<Double> iterationCongestion = new ArrayList<>();
     private ArrayList<Integer> iterationPlans = new ArrayList<>();
@@ -143,9 +145,20 @@ public class CongestionDetectionEventHandler implements
         this.congestionTripsNLinks.put(event.getVehicleId(), tripsData);
     }
 
+    @Override
+    public void handleEvent(VehicleDepartsAtFacilityEvent event) {
+
+    }
+
+    @Override
+    public void handleEvent(VehicleEntersTrafficEvent event) {
+        //event.
+    }
 
     @Override
     public void handleEvent(PersonDepartureEvent event) {
+        //TODO move this to one of the above event handlers, as this one doesn't use
+        // the correct vehicle ID!
         Id<Vehicle> vehId = Id.create( event.getPersonId(), Vehicle.class ) ; // unfortunately necessary since vehicle departures are not uniformly registered
         this.earliestLinkExitTime.put( vehId, event.getTime() ) ;
         this.numberOfDepartureEvents += 1;
