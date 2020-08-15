@@ -18,9 +18,15 @@
  * *********************************************************************** */
 package org.matsim.project;
 
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.contrib.decongestion.DecongestionAnalysisModule;
 import org.matsim.contrib.decongestion.DecongestionConfigGroup;
+import org.matsim.contrib.decongestion.DecongestionControlerListener;
+import org.matsim.contrib.multimodal.MultiModalModule;
+import org.matsim.contrib.multimodal.config.MultiModalConfigGroup;
+import org.matsim.contrib.multimodal.tools.PrepareMultiModalScenario;
 import org.matsim.contrib.otfvis.OTFVisLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -38,6 +44,12 @@ import org.sasha.strategy.ReservationResetStrategyProvider;
 import org.sasha.strategy.ReservationStrategyManagerProvider;
 //If need ExamplesUtils, just hover over it so that IntelliJ can automatically import it through Maven
 //import org.matsim.examples.ExamplesUtils;
+
+import org.matsim.contrib.decongestion.data.DecongestionInfo;
+import org.matsim.contrib.decongestion.handler.DelayAnalysis;
+import org.matsim.contrib.decongestion.handler.PersonVehicleTracker;
+
+import java.util.Map;
 
 /**
  * @author sasha, based off of nagel's examples
@@ -88,11 +100,10 @@ public class RunMatsim{
 			config = ConfigUtils.loadConfig( "scenarios/geneva-10pct/config_wmodes.xml" );
 		} else {
 			config = ConfigUtils.loadConfig( args );
+			//config = ConfigUtils.loadConfig( args, new MultiModalConfigGroup() ) ;
 		}
 		config.controler().setOverwriteFileSetting( OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists );
 		// possibly modify config here
-
-		config.getModules();
 
 		Scenario scenario = ScenarioUtils.loadScenario(config) ;
 		// possibly modify scenario here
@@ -105,21 +116,12 @@ public class RunMatsim{
 					item.getAttributes().
 				}
 			});
-		});*/
-
-
-		//Try to get the # of plans, but this has to be done with events, as plans may change per iteration with replanning!
-		/*for(Map.Entry p: scenario.getPopulation().getPersons().entrySet()) {		p.getValue();	}*/
+		});
+		for(Map.Entry<Id<Person>, ? extends Person> person : scenario.getPopulation().getPersons().entrySet()){
+			person.getValue().createCopyOfSelectedPlanAndMakeSelected().
+		}*/
 
 		Controler controler = new Controler( scenario ) ;
-
-		//Install other stuffs
-		/*controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				addEventHandlerBinding().toInstance(new CongestionDetectionEventHandler(scenario.getNetwork(), config.controler().getOutputDirectory()));
-			}
-		});*/
 
 		//Install official congestion analyser
 		controler.addOverridingModule(new AbstractModule() {
@@ -128,51 +130,41 @@ public class RunMatsim{
 				//this.bind(DelayAnalysis.class).asEagerSingleton();
 				//this.addEventHandlerBinding().to(DelayAnalysis.class);
 				this.bind(DecongestionConfigGroup.class).asEagerSingleton();
+				/*this.bind(DelayAnalysis.class).asEagerSingleton();
+				this.addEventHandlerBinding().to(DelayAnalysis.class);
+
+				this.bind(PersonVehicleTracker.class).asEagerSingleton();
+				this.addEventHandlerBinding().to(PersonVehicleTracker.class);
+
+				this.addControlerListenerBinding().to(DecongestionControlerListener.class);*/
 			}
 		});
 		//To use this, need to bind DecongestionConfigGroup like above
 		controler.addOverridingModule(new DecongestionAnalysisModule());
 		//controler.addOverridingModule(new DecongestionModule());
 
-		//Install strategies
-		//controler.addOverridingModule(new StrategyManagerModule());
-		/*controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				//this.addPlanStrategyBinding().t;
-				//this.
-				//ReRoute.class.notifyAll();
-				bind(StrategyManager.class).toProvider(new ReservationStrategyManagerProvider(
-					scenario
-				));
-				//this.addPlanStrategyBinding("ReRoute").toProvider(new ReservationResetStrategyProvider(scenario));
-			}
-		});*/
-
-		/*controler.addOverridingModule(new AbstractModule() {
-			@Override
-			public void install() {
-				this.addControlerListenerBinding().toInstance(new TestReset());
-			}
-		});*/
-
 		int networkSize 	= scenario.getNetwork().getLinks().size();			//Network size
 		int populationSite 	= scenario.getPopulation().getPersons().size();		//Population size
+		System.out.println("Flow capacity factor : " + config.qsim().getFlowCapFactor());
 
 		//Install my own module
 		controler.addOverridingModule(new SimpleReservationModule(
 				config,
 				controler,
 				scenario,
+				"car",
 				"rcar",
 				config.qsim().getFlowCapFactor())	//Use current flow capacity factor
 		);
 		System.out.println("Installed my module !");
-		System.out.println("Flow capacity factor : " + config.qsim().getFlowCapFactor());
 
 		//Add this if want OTFVis live view thingy while simulation runs
 		//Can also just ask OTFVis to not sync in the interface
 		//controler.addOverridingModule( new OTFVisLiveModule() ) ;
+
+		/*PrepareMultiModalScenario.run(scenario);
+		//Controler controler = new Controler(scenario);
+		controler.addOverridingModule(new MultiModalModule());*/
 
 		controler.run();
 	}
