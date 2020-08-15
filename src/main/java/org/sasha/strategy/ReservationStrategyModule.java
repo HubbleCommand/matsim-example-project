@@ -126,7 +126,7 @@ public class ReservationStrategyModule extends ReRoute implements PlanStrategyMo
                     for(Link link : path.links) {
                         double currentLinkTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
                         double currentLinkExitTime = timeToBeElapsed + currentLinkTime;
-                        ReservationManager.getInstance().makeReservation(timeToBeElapsed, currentLinkExitTime, link);
+
                         timeToBeElapsed += currentLinkTime;
 
                         logger.warn("Reserved link " + link.getId() + " at time " + timeToBeElapsed + "\n");

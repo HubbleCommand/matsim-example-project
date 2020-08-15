@@ -25,17 +25,12 @@ public class ReservationWriter extends MatsimXmlWriter implements MatsimWriter {
     }
 
     private void writeReservations(){
-        /*HashMap<Integer, ReservationSlot> reservationSlots = ReservationManager.getInstance().getSlots();
-
-        for(Map.Entry<Integer, ReservationSlot> slot : reservationSlots.entrySet()){
-            List<Tuple<String, String>> attributes = new ArrayList<>();
-
-            for(Map.Entry<Id<Link>, Integer> slotData : slot.getValue().getReservations().entrySet()){
-                attributes.add(new Tuple<String, String>(slotData.getKey().toString(), slotData.getValue().toString()));
-            }
-            writeStartTag("slot : " + slot.getKey(), attributes);
-            writeEndTag("slot : " + slot.getKey());
-        }*/
+        /*
+        * For each slot
+        *   For each link
+        *       Write number of reservations
+        *
+        * */
     }
 
     private void writeFinish() {
