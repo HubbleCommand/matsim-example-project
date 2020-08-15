@@ -8,6 +8,7 @@
 	<module name="global">
 		<param name="randomSeed" value="4711" />
 		<param name="coordinateSystem" value="Atlantis" />
+		<param name="numberOfThreads" value="5"/>
 	</module>
 
 	<module name="vehicles" >
@@ -20,7 +21,7 @@
 	</module>
 
 	<module name="plans">
-		<param name="inputPlansFile" value="plansCPPwTFCT_25pct_fixed.xml" />
+		<param name="inputPlansFile" value="plansCPPwTFCT_25pct_fixed_1.0.xml" />
 	</module>
 
 	<module name="controler">
@@ -85,26 +86,69 @@
 		<param name="activityLatestStartTime_1" value="09:00:00" />
 		<param name="activityEarliestEndTime_1" value="" />
 		<param name="activityClosingTime_1"     value="18:00:00" />
+
+		<parameterset type="activityParams" >
+			<param name="activityType" value="waitingr" />
+			<param name="minimalDuration" value="00:01:00" />
+			<param name="typicalDuration" value="00:20:00" />
+			<param name="priority" value="1.0" />
+		</parameterset>
+		<param name="traveling_waiting" value="-6"/>
+
+		<param name="marginalUtilityOfMoney" value="1.0"/>
+		<param name="utilityOfLineSwitch" value=" -1.0"/>
+		<parameterset type="modeParams">
+			<param name="mode" value="car"/>
+			<param name="constant" value="0.0"/>
+			<param name="marginalUtilityOfDistance_util_m" value="0.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value=" -6.0"/>
+			<param name="monetaryDistanceRate" value=" -0.0002"/>
+		</parameterset>
+		<parameterset type="modeParams">
+			<param name="mode" value="rcar"/>
+			<param name="constant" value="0.0"/>
+			<param name="marginalUtilityOfDistance_util_m" value="0.0"/>
+			<param name="marginalUtilityOfTraveling_util_hr" value=" -6.0"/>
+			<param name="monetaryDistanceRate" value=" -0.0002"/>
+		</parameterset>
 	</module>
 	
 	<module name="strategy">
 		<param name="maxAgentPlanMemorySize" value="5" /> <!-- 0 means unlimited -->
 
 		<!-- TODO look here for config on using strategy...-->
-		<param name="ModuleProbability_1" value="1.0" />
+		<!--<param name="ModuleProbability_1" value="1.0" />
 		<param name="Module_1" value="BestScore" />
 
 		<param name="ModuleProbability_2" value="0.9" />
 		<param name="Module_2" value="BestScore" />
 
 		<param name="ModuleProbability_3" value="0.1" />
-		<param name="Module_3" value="ReRoute" />
+		<param name="Module_3" value="ReRoute" />-->
 
-		<!--<param name="ModuleProbability_1" value="0.9" />
+		<param name="ModuleProbability_1" value="0.9" />
 		<param name="Module_1" value="BestScore" />
 
 		<param name="ModuleProbability_2" value="0.1" />
-		<param name="Module_2" value="ReRoute" />-->
+		<param name="Module_2" value="ReRoute" />
+
+		<!--
+		https://github.com/matsim-org/matsim-code-examples/blob/11.x/src/main/java/org/matsim/codeexamples/strategies/pluggablePlanStrategyFromFile/RunPluggablePlanStrategyFromFileExample.java
+		https://github.com/matsim-org/matsim-code-examples/blob/11.x/scenarios/equil/config-with-pluggablePlanStrategy.xml
+
+			If want to use own strategy module from config, need :
+			WARN sum of all probabilities must be 1!
+			<param name="ModuleProbability_3" value="0.1"/>
+			<param name="Module_3" value="package org.sasha.strategy.ReservationStrategyProvider"/>
+		-->
+		<!--<param name="ModuleProbability_1" value="1.0" />
+		<param name="Module_1" value="package org.sasha.strategy.ReservationStrategyProvider" />
+
+		<param name="ModuleProbability_2" value="0.9" />
+		<param name="Module_2" value="BestScore" />
+
+		<param name="ModuleProbability_3" value="0.1" />
+		<param name="Module_3" value="ReRoute" />-->
 	</module>
 
 	<!-- Added for randomly changing departure times for activities -->
