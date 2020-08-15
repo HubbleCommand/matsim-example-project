@@ -57,7 +57,7 @@ import org.matsim.core.population.routes.RouteUtils;
 import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.router.util.LeastCostPathCalculator.Path;
 import org.matsim.facilities.Facility;
-import org.sasha.reserver.ReservationManager;
+import org.sasha.reserverV2.ReservationManagerV2;
 
 /**
  * @author sasha, based off of nagel's examples
@@ -74,6 +74,7 @@ public class SimpleReservationRoutingModule implements RoutingModule {
 
     private final Network network;
     private final LeastCostPathCalculator pathCalculator;
+    int counter = 0;
 
     //FIXME this should be an available function,
     /*public SimpleReservationRoutingModule(){
@@ -102,8 +103,14 @@ public class SimpleReservationRoutingModule implements RoutingModule {
 
     @Override
     public List<? extends PlanElement> calcRoute(Facility fromFacility, Facility toFacility, double departureTime, Person person) {
+        //Check if need to clear person reservations
+        ReservationManagerV2.getInstance().checkClearPersonReservations(person);
+
+        //To avoid problems randomly use or don't use reservations cost in route calculations?
+
         //Use base router like Dijkstra
         //Reserve route with ReservationManager
+
 
         //In matsim-libs look at
         //  contribs\parking\src\main\java\org\matsim\contrib\parking\parkingsearch\routing\WithinDayParkingRouter.java
@@ -113,6 +120,7 @@ public class SimpleReservationRoutingModule implements RoutingModule {
         //matsim\src\main\java\org\matsim\core\router\NetworkRoutingModule.java
 
         Leg newLeg = this.populationFactory.createLeg( this.mode );
+        //newLeg.setMode();
 
         //Gbl.assertNotNull(fromFacility);
         //Gbl.assertNotNull(toFacility);
@@ -168,17 +176,38 @@ public class SimpleReservationRoutingModule implements RoutingModule {
         //Set departure time doesn't seem to do anything here... need to create dummy activity as done above
         newLeg.setDepartureTime(departureTime);
 
+        if(counter % 1000 == 0){
+            logger.warn("Mode for current leg: " + newLeg.getMode().toString());
+        }
+        counter++;
+
         //Reserve final path
-        double timeToBeElapsed = 0;
+        /*double timeToBeElapsed = 0;
         for(Link link : path.links) {
             double currentLinkTraverseTime = timeToBeElapsed + (link.getLength() / link.getFreespeed());
             double currentLinkExitTime = timeToBeElapsed + currentLinkTraverseTime;
-            ReservationManager.getInstance().makeReservation(
+            ReservationManagerV2.getInstance().makeReservation(
                     timeToBeElapsed + departureTime,
                     currentLinkExitTime + departureTime,
-                    link
+                    link,
+                    person
+                    //,this.currentIteration
             );
             timeToBeElapsed += currentLinkTraverseTime;
+        }*/
+
+        double itineraryTimeToBeElapsed = 0;
+        for(Link link : path.links) {
+            double timeToTraverseLink = link.getLength() / link.getFreespeed();
+
+            ReservationManagerV2.getInstance().makeReservation(
+                    departureTime + itineraryTimeToBeElapsed,
+                    departureTime + itineraryTimeToBeElapsed + timeToTraverseLink,
+                    link,
+                    person
+            );
+
+            itineraryTimeToBeElapsed += timeToTraverseLink;
         }
 
         // FIXME this was in the example code, but IntelliJ coughs up on code analysis when committing

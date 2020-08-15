@@ -6,6 +6,8 @@ import org.apache.commons.lang3.event.EventUtils;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.contrib.dvrp.router.DefaultLeastCostPathCalculatorWithCache;
+import org.matsim.contrib.dvrp.router.DistanceAsTravelDisutility;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -13,6 +15,7 @@ import org.matsim.core.controler.events.StartupEvent;
 import org.matsim.core.controler.listener.StartupListener;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.handler.EventHandler;
+import org.matsim.core.replanning.StrategyManager;
 import org.matsim.core.router.*;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.vehicles.VehicleType;
@@ -44,19 +47,25 @@ import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.ActivityOption;
 import org.matsim.utils.objectattributes.attributable.Attributes;
 import org.sasha.events.handlers.CongestionDetectionEventHandler;
+import org.sasha.events.handlers.SimpleCongestionDetectionEventHandler;
 import org.sasha.reserver.ResetReservationsIterationEndsEventHandler;
+import org.sasha.strategy.ReservationStrategyManagerProvider;
 
 public class SimpleReservationModule extends AbstractModule {
-    //private final Config config;
+    private final Config config;
     private final Controler controler;
     private final Scenario scenario;
     private final String reservationMode;
+    private final String noReservationMode;
+    private double flowCapacityFactor;
 
-    public SimpleReservationModule(Config config, Controler controler, Scenario scenario, String reservationMode){
-        //this.config = config;
+    public SimpleReservationModule(Config config, Controler controler, Scenario scenario, String noReservationMode,String reservationMode, double flowCapacityFactor){
+        this.config = config;
         this.controler = controler;
         this.scenario = scenario;
+        this.noReservationMode = noReservationMode;
         this.reservationMode = reservationMode;
+        this.flowCapacityFactor = flowCapacityFactor;
 
         //Was trying to do something neat, but can't just add my own module to the config apparently
         //To look at later, no time for during the project
@@ -70,9 +79,8 @@ public class SimpleReservationModule extends AbstractModule {
         System.out.println("Reservation mode: " + reservationMode);
     }
 
-    @Deprecated
-    private void installProvider(){
-        addRoutingModuleBinding(reservationMode).toProvider(
+    private void installProviders(){
+        /*addRoutingModuleBinding("car").toProvider(
                 new SimpleReservationRoutingModuleProvider(
                         // the module uses the trip router for the PT part.
                         // This allows to automatically adapt to user settings,
@@ -81,19 +89,78 @@ public class SimpleReservationModule extends AbstractModule {
                         //binder().getProvider(Key.get(RoutingModule.class, Names.named(TransportMode.pt))),
                         scenario.getPopulation().getFactory(),
                         //teleport,
-                        scenario.getNetwork()
+                        scenario.getNetwork(),
+                        this.flowCapacityFactor
                 )
-        ); //Could .asSingleton() solve my woes?
+        );*/ //Could .asSingleton() solve my woes?
         // we still need to provide a way to identify our trips
         // as being teleportation trips.
         // This is for instance used at re-routing.
         //bind(MainModeIdentifier.class).toInstance(new SimpleMainModeIdentifier(new MainModeIdentifierImpl()));
         //addEventHandlerBinding().toInstance((EventHandler) new ResetReservationsIterationEndsEventHandler());
+
+        addRoutingModuleBinding("car").toProvider(new SimpleReservationRoutingModuleProvider(
+                new AStarLandmarksFactory(1).createPathCalculator(
+                        scenario.getNetwork(),
+                        new DistanceAsTravelDisutility(),
+                        new FreeSpeedTravelTime()
+                ),
+                scenario.getPopulation().getFactory(),
+                scenario.getNetwork(),
+                this.flowCapacityFactor,
+                "car"
+        ));
+        addRoutingModuleBinding("rcar").toProvider(new SimpleReservationRoutingModuleProvider(
+                new SimpleReservationLeastCostPathCalculator(
+                        new AStarLandmarksFactory(1).createPathCalculator(
+                                scenario.getNetwork(),
+                                new SimpleReservationAsTravelDisutility(
+                                        100,
+                                        500,
+                                        this.flowCapacityFactor,
+                                        60
+                                ),
+                                new FreeSpeedTravelTime()
+                        )
+                ),
+                scenario.getPopulation().getFactory(),
+                scenario.getNetwork(),
+                this.flowCapacityFactor,
+                "rcar"
+            )
+        );
+    }
+
+    private void installCongestionAnalyser(){
+        /*addEventHandlerBinding().toInstance(new CongestionDetectionEventHandler(
+                        scenario.getNetwork(),
+                        config.controler().getOutputDirectory()
+                )
+        );*/
+        addEventHandlerBinding().toInstance(new SimpleCongestionDetectionEventHandler(
+                this.scenario.getNetwork(),
+                config.controler().getOutputDirectory()
+        ));
+    }
+
+    private void installStrategies(){
+        //this.addPlanStrategyBinding().t;
+        //this.
+        //ReRoute.class.notifyAll();
+        bind(StrategyManager.class).toProvider(new ReservationStrategyManagerProvider(
+                scenario
+        ));
+        //this.addPlanStrategyBinding("ReRoute").toProvider(new ReservationResetStrategyProvider(scenario));
     }
 
     @Override
     public void install() {
-        installProvider();
+        this.installProviders();
+        this.installCongestionAnalyser();
+        //This should NOT be necessary according to current documentation
+        //addTravelTimeBinding("rcar").to(networkTravelTime());
+        //addTravelDisutilityFactoryBinding("rcar").to(carTravelDisutilityFactoryKey());
+
         //V0 worst, doesn't really do anything for my case
         //bindLeastCostPathCalculatorFactory().to(SimpleReservationLeastCostPathCalculatorFactory.class);
 
@@ -103,32 +170,38 @@ public class SimpleReservationModule extends AbstractModule {
         //addRoutingModuleBinding(this.reservationMode).to(SimpleReservationRoutingModule.class);
 
         //Va working
-        /*addRoutingModuleBinding(this.reservationMode).toInstance(new SimpleReservationRoutingModule(
+        //Routing module for those that don't calculate routes based on reservation, but
+        // still reserve routes so that the reservation system takes them into account
+        /*addRoutingModuleBinding("car").toInstance(new SimpleReservationRoutingModule(
+                "car",
+                scenario.getNetwork(),
+                scenario.getPopulation().getFactory(),
+                new AStarLandmarksFactory(1).createPathCalculator(
+                        scenario.getNetwork(),
+                        new DistanceAsTravelDisutility(),
+                        new FreeSpeedTravelTime()
+                )
+        ));
+        addRoutingModuleBinding("rcar").toInstance(new SimpleReservationRoutingModule(
                 "car",
                 scenario.getNetwork(),
                 scenario.getPopulation().getFactory(),
                 new SimpleReservationLeastCostPathCalculator(
-                        //new SimpleReservationAsTravelDisutility(),
-                        //new FreeSpeedTravelTime()
-                        /*new DijkstraFactory().createPathCalculator(
-                                scenario.getNetwork(),
-                                new SimpleReservationAsTravelDisutility(),
-                                new FreeSpeedTravelTime())//END BLOCK COMMENT WAS HERE
                         new AStarLandmarksFactory(1).createPathCalculator(
                                 scenario.getNetwork(),
-                                new SimpleReservationAsTravelDisutility(),
+                                new SimpleReservationAsTravelDisutility(
+                                        100,
+                                        500,
+                                        this.flowCapacityFactor,
+                                        60
+                                ),
                                 new FreeSpeedTravelTime())
                         )
                 )
-                /*new DijkstraFactory().createPathCalculator(
-                        scenario.getNetwork(),
-                        new SimpleReservationAsTravelDisutility(100, 1, 60),
-                        new FreeSpeedTravelTime())//END BLOCK COMMENT WAS HERE
         );*/
-        //addEventHandlerBinding().toInstance(new ResetReservationsIterationEndsEventHandler());
+        System.out.println("Routing module should be installed !");
         addControlerListenerBinding().toInstance(new ResetReservationsIterationEndsEventHandler());
 
-        //Adding strategy
-        //addPlanStrategyBinding()
+        bind(MainModeIdentifier.class).toInstance(new SimpleMainModeIdentifier(new MainModeIdentifierImpl()));
     }
 }

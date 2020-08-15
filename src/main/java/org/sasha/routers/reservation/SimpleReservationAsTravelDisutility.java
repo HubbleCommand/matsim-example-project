@@ -7,7 +7,7 @@ import org.matsim.core.router.util.TravelDisutility;
 import org.matsim.core.router.util.TravelTime;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.vehicles.Vehicle;
-import org.sasha.reserver.ReservationManager;
+import org.sasha.reserverV2.ReservationManagerV2;
 
 //Doc: https://www.matsim.org/apidocs/core/0.9.0/org/matsim/core/router/util/TravelDisutility.html
 
@@ -52,53 +52,80 @@ public class SimpleReservationAsTravelDisutility implements TravelDisutility {
         //STRICTLY smaller than zero, if zero then costs NEED TO BE INCURRED
         if(reservedCapacity - linkCapacity < 0){
             //Returning 0 here will result in NullPointerExceptions
-            return getLinkMinimumTravelDisutility(link);
+            //return getLinkMinimumTravelDisutility(link);
+
+            //This is what I want to use, but routes don't get calculated. Could it be returning Zero?
+            //return (getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor));
+
+            //It was returning a negative cost!! Duh!
+            return (getLinkMinimumTravelDisutility(link) + ((reservedCapacity / linkCapacity) * ReservationDisutilityFactor));
         } else {
             // For something more fine-tunable, use + instead of *
             //getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
 
             //Or can also use
             //(getLinkMinimumTravelDisutility(link) * ReservationDisutilityFactor) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
-            return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * FullReservationDisutilityFactor);
+            return (getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * FullReservationDisutilityFactor));
         }
     }
 
+    //WARN THIS IS NOT WORKING. FOR SOME REASON WON'T CALCULATE ANY ROUTES!!!!!
     public double calculateAdvancedReservedCost(double linkCapacity, double reservedCapacity, Link link){
-        return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor);
-    }
+        double linkTravelDisutility = getLinkMinimumTravelDisutility(link) + ((reservedCapacity / linkCapacity) * ReservationDisutilityFactor);
 
-    public double calculateSimpleReservedCost(double linkCapacity, double reservedCapacity, Link link){
-        if(reservedCapacity - linkCapacity <= 0){
-            return getLinkMinimumTravelDisutility(link);
+        if(linkTravelDisutility < 0){
+            return 0;
         } else {
-            return 30000.0;
+            return linkTravelDisutility;
         }
+
+        //return getLinkMinimumTravelDisutility(link) * ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor);
+        /*if(reservedCapacity - linkCapacity < 0){
+            //Returning 0 here will result in NullPointerExceptions
+            return getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor);
+        } else {
+            // For something more fine-tunable, use + instead of *
+            //getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
+
+            //Or can also use
+            //(getLinkMinimumTravelDisutility(link) * ReservationDisutilityFactor) + ((reservedCapacity - linkCapacity + 1) * ReservationDisutilityFactor)
+            return getLinkMinimumTravelDisutility(link) + ((reservedCapacity - linkCapacity + 1) * FullReservationDisutilityFactor);
+        }*/
     }
 
     @Override
     public double getLinkTravelDisutility(final Link link, final double time, final Person person, final Vehicle vehicle) {
         //Get link capacity
         //TODO check if Link.getCapacity(Time) is already normalized to the flow factors!
-        //might be available throuth link.getFlowCapacityPerSec(time)
+        //might be available through link.getFlowCapacityPerSec(time)
         //will regardless need to take into account timeDifferenceFactor, as this normalizes time difference to time slot interval
         double linkCapacity =
-                ( 1 / this.flowCapacityFactor) *                                // Take into account the flow capacity factor
+
+                //TODO update the capacity factor!!!!!!!!
+                //Fuck I think this is wrong as well...
+                this.flowCapacityFactor *
+                //Do I even need to do this? I don't think so, it was fine when it was 1!
+                //( 1 / this.flowCapacityFactor) *                                // Take into account the flow capacity factor
                                                                                 // However, need to inverse the factor,
-                (link.getCapacity(time) / this.timeDifferenceFactor) *          // Take into account the difference in time units
+                (link.getCapacity(time) / 60) *          // Take into account the difference in time units
                                                                                 // link capacity in vehicles / hour, but we need vehicles / minute
-                (ReservationManager.getInstance().getTimeInterval() / 60);      // Take into account the time interval of the slots
+                (ReservationManagerV2.getInstance().getTimeInterval() / 60);    // Take into account the time interval of the slots
+
+        //linkCapacity = Math.round(linkCapacity * 100.0) / 100.0;
+        linkCapacity = Math.round(linkCapacity);
 
         timesCalled += 1;
         if(linkCapacity != 0){
             //Get the current number of reservations for the link
-            double reservedCapacity = ReservationManager.getInstance().getReservations(time, link);
+            double reservedCapacity = ReservationManagerV2.getInstance().getReservations(time, link);
 
-            /*if(timesCalled % 1000000 == 0){
-                LOG.warn("Link : " + link.getId() + " at time : " + time + " has reserved : " + reservedCapacity + "\n");
-            }*/
+            //One direction on the Pont du Mont Blanc
+            if(timesCalled % 100000 == 0 /*&& link.getId().equals("83006")*/ && reservedCapacity > 0){
+                //LOG.warn("Link : " + link.getId() + " at time : " + time + " has reserved : " + reservedCapacity + " out of normalized cap. : " + linkCapacity + " out of defined xml cap. :" + link.getCapacity(time) + "\n");
+            }
 
             //Compute cost
-            return this.calculateRelativeReservedCost(linkCapacity, reservedCapacity, link);
+            return this.calculateAdvancedReservedCost(linkCapacity, reservedCapacity, link);
         } else {
             return this.getLinkMinimumTravelDisutility(link);
         }

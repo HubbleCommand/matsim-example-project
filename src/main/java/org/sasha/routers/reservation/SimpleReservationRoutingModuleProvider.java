@@ -7,6 +7,7 @@ import org.matsim.core.router.AStarEuclideanFactory;
 import org.matsim.core.router.AStarLandmarksFactory;
 import org.matsim.core.router.DijkstraFactory;
 import org.matsim.core.router.RoutingModule;
+import org.matsim.core.router.util.LeastCostPathCalculator;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.facilities.ActivityFacility;
 
@@ -15,16 +16,25 @@ public class SimpleReservationRoutingModuleProvider implements Provider<RoutingM
     private PopulationFactory populationFactory;
     private ActivityFacility teleport;
     private Network network;
+    private double flowCapacityFactor;
+    private LeastCostPathCalculator leastCostPathCalculator;
+    private String mode;
 
     public SimpleReservationRoutingModuleProvider(
+            LeastCostPathCalculator leastCostPathCalculator,
             //Provider<RoutingModule> tripRouterProvider,
             PopulationFactory populationFactory,
             //ActivityFacility teleport,
-            Network network) {
+            Network network,
+            double flowCapacityFactor,
+            String mode) {
         //this.tripRouterProvider = tripRouterProvider;
         this.populationFactory = populationFactory;
         //this.teleport = teleport;
         this.network = network;
+        this.flowCapacityFactor = flowCapacityFactor;
+        this.leastCostPathCalculator = leastCostPathCalculator;
+        this.mode = mode;
     }
 
     @Override
@@ -38,32 +48,29 @@ public class SimpleReservationRoutingModuleProvider implements Provider<RoutingM
                 network,
                 populationFactory);*/
                 //new FreeSpeedTravelTime(),
-                "car",
-                network,
-                populationFactory,
+                this.mode,
+                this.network,
+                this.populationFactory,
                 //new DijkstraFactory().createPathCalculator(network, travelDisutility, this.travelTime)
                 /*new DijkstraFactory().createPathCalculator(
                         network,
                         new SimpleReservationAsTravelDisutility(100, 1, 60),
                         new FreeSpeedTravelTime())*/
+                /*
                 new SimpleReservationLeastCostPathCalculator(
-                        //new SimpleReservationAsTravelDisutility(),
-                        //new FreeSpeedTravelTime()
-                        /*new DijkstraFactory().createPathCalculator(
-                                network,
-                                new SimpleReservationAsTravelDisutility(),
-                                new FreeSpeedTravelTime())*/
-                        /*new AStarEuclideanFactory().createPathCalculator(
-                                network,
-                                new SimpleReservationAsTravelDisutility(),
-                                new FreeSpeedTravelTime()
-                        )*/
                         new AStarLandmarksFactory(1).createPathCalculator(
                                 network,
-                                new SimpleReservationAsTravelDisutility(),
+                                new SimpleReservationAsTravelDisutility(
+                                        100,
+                                        1000,
+                                        this.flowCapacityFactor,
+                                        60
+                                ),
                                 new FreeSpeedTravelTime()
                         )
                 )
+                 */
+                this.leastCostPathCalculator
         );
     }
 }

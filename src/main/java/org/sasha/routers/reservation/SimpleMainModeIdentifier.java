@@ -24,6 +24,9 @@ public class SimpleMainModeIdentifier implements MainModeIdentifier {
             if ( pe instanceof Leg && ((Leg) pe).getMode().equals( "car" ) ) {
                 return "car";
             }
+            if ( pe instanceof Leg && ((Leg) pe).getMode().equals( "rcar" ) ) {
+                return "rcar";
+            }
         }
         // if the trip doesn't contain a teleportation leg,
         // fall back to the default identification method.
