@@ -8,7 +8,8 @@ import org.matsim.withinday.events.handler.ReplanningEventHandler;
 
 @Deprecated //This cannot do what I want it to do.... :(
 public class TestReset implements
-        ReplanningEventHandler,     //Only throws when withinday replanning
+        ReplanningEventHandler,     //Only throws when withinday replanning NO WTF WAS I THINKING
+        //REPLANNING EVENT HANDLER SHOULD BE CALLED HERE
         ReplanningListener,         //Doesn't give necessary information
         PlansReplanning             //Why does this one even exist?
 
@@ -25,6 +26,6 @@ public class TestReset implements
     public void handleEvent(ReplanningEvent event) {
         System.out.println("Replanning for person: " + event.getPersonId());
         logger.warn("Replanning for person: " + event.getPersonId());
-        //ReservationManager.getInstance().removeReservationsForPerson(event.getPersonId());
+        //Remove person's existing reservations
     }
 }

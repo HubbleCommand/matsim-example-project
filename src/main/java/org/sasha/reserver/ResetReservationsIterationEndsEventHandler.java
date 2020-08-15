@@ -11,6 +11,7 @@ import org.matsim.core.controler.listener.ReplanningListener;
 import org.matsim.core.events.handler.BasicEventHandler;
 import org.matsim.core.events.handler.EventHandler;
 import org.matsim.core.replanning.ReplanningContext;
+import org.sasha.reserverV2.ReservationManagerV2;
 import org.sasha.routers.reservation.SimpleReservationRoutingModule;
 import org.sasha.writers.ReservationWriter;
 
@@ -21,8 +22,9 @@ public class ResetReservationsIterationEndsEventHandler implements IterationEnds
 
     @Override
     public void notifyIterationEnds(IterationEndsEvent event) {
-        String reservations = ReservationManager.getInstance().getReservations();
-        logger.warn("Number of reservations for this iteration : " + ReservationManager.getInstance().getReservationsSum());
+        logger.warn("Number of reservationsV2 for this iteration : " + ReservationManagerV2.getInstance().getReservationsSum() + "\n");
+
+        ReservationManagerV2.getInstance().updateCurrentIterationNumber(event.getIteration());
 
         //new ReservationWriter().write("/output/ITERS/it." + event.getIteration() + "/reservations.xml");
 
@@ -33,7 +35,7 @@ public class ResetReservationsIterationEndsEventHandler implements IterationEnds
         // Need to only remove the reservations of those that are replanning
         // This also cannot be done here as far as I can tell...
 
-        //ReservationManager.getInstance().clearReservations();
+        //ReservationManagerV2.getInstance().clearReservations();
     }
 
     @Override
