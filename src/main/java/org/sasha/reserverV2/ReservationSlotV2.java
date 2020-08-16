@@ -10,7 +10,16 @@ public class ReservationSlotV2 {
     //private HashMap<Id<Link>, ArrayList<Id<Person>>> reservations2people;
     //Change to HashSet!
     private HashMap<Id<Link>, HashSet<Id<Person>>> reservations2people;
-    private HashMap<Id<Link>, Integer> reservations;
+    private HashMap<Id<Link>, Integer> reservations; //(instead of reservations2people)
+    /*TODO go back to Id, Integer HashMap:
+        When go to delete a reservation, do:
+        for(Id<Link> linkEntry : personToReservedLinks.get(person).entrySet()){
+                Integer currentCount = reservations.get(linkEntry);
+                newCount = currentCount - 1;
+                reservations.put(linkEntry, newCount);
+        }
+    */
+
 
     //This will make it quicker at deletion, as we will know which links
     // the person has reservations on!

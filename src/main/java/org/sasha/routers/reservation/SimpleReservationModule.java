@@ -6,6 +6,9 @@ import org.apache.commons.lang3.event.EventUtils;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.contrib.decongestion.handler.DelayAnalysis;
 import org.matsim.contrib.dvrp.router.DefaultLeastCostPathCalculatorWithCache;
 import org.matsim.contrib.dvrp.router.DistanceAsTravelDisutility;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -17,6 +20,10 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.handler.EventHandler;
 import org.matsim.core.replanning.StrategyManager;
 import org.matsim.core.router.*;
+import org.matsim.core.scoring.ScoringFunction;
+import org.matsim.core.scoring.ScoringFunctionFactory;
+import org.matsim.core.scoring.SumScoringFunction;
+import org.matsim.core.scoring.functions.*;
 import org.matsim.core.trafficmonitoring.FreeSpeedTravelTime;
 import org.matsim.vehicles.VehicleType;
 
@@ -98,7 +105,6 @@ public class SimpleReservationModule extends AbstractModule {
         // This is for instance used at re-routing.
         //bind(MainModeIdentifier.class).toInstance(new SimpleMainModeIdentifier(new MainModeIdentifierImpl()));
         //addEventHandlerBinding().toInstance((EventHandler) new ResetReservationsIterationEndsEventHandler());
-
         addRoutingModuleBinding("car").toProvider(new SimpleReservationRoutingModuleProvider(
                 new AStarLandmarksFactory(1).createPathCalculator(
                         scenario.getNetwork(),
@@ -131,6 +137,28 @@ public class SimpleReservationModule extends AbstractModule {
         );
     }
 
+    private void installScoringFunctions(){
+        ScoringFunctionFactory instance = new ScoringFunctionFactory(){
+            @Inject private ScoringParametersForPerson params;
+            @Inject private Network network ;
+            @Override public ScoringFunction createNewScoringFunction(Person person) {
+                final ScoringParameters parameters = params.getScoringParameters( person );
+                SumScoringFunction sumScoringFunction = new SumScoringFunction() ;
+                sumScoringFunction.addScoringFunction(new CharyparNagelActivityScoring(parameters));
+                sumScoringFunction.addScoringFunction(new CharyparNagelLegScoring(parameters, network));
+                sumScoringFunction.addScoringFunction(new CharyparNagelAgentStuckScoring(parameters));
+
+                //double income = (double) person.getAttributes().getAttribute( NET_INCOME_PER_MONTH );
+                //double margUtlOfMoney = 2000. / income;;
+                //log.warn( "margUtlOfMoney=" + margUtlOfMoney ) ;
+                //sumScoringFunction.addScoringFunction( new CharyparNagelMoneyScoring( margUtlOfMoney ) ) ;
+
+                return sumScoringFunction ;
+            }
+        } ;
+        this.bindScoringFunctionFactory().toInstance(instance) ;
+    }
+
     private void installCongestionAnalyser(){
         /*addEventHandlerBinding().toInstance(new CongestionDetectionEventHandler(
                         scenario.getNetwork(),
@@ -155,6 +183,8 @@ public class SimpleReservationModule extends AbstractModule {
 
     @Override
     public void install() {
+        //No point in installing scoring functions, would need a more advanced router!
+        this.installScoringFunctions();
         this.installProviders();
         this.installCongestionAnalyser();
         //This should NOT be necessary according to current documentation
