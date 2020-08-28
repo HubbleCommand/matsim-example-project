@@ -13,7 +13,7 @@ import java.util.Map;
 
 public class ReservationManagerV2 {
     private static final Logger logger = Logger.getLogger(ReservationManagerV2.class);
-    private static ReservationManagerV2 INSTANCE;
+    private static ReservationManagerV2 INSTANCE;   //TODO this needs to be volatile to be core safe!
     private double timeInterval = 300; //Default 5-minute time interval, stored as seconds
     private int handledRemovals = 0;
 
@@ -30,7 +30,7 @@ public class ReservationManagerV2 {
         //lastIterationPersonReserved = new HashMap<>(25000);
         //personSlots = new HashMap<Id<Person>, HashSet<Integer>>(25000);
         lastIterationPersonReserved = new HashMap<>();
-        personSlots = new HashMap<Id<Person>, HashSet<Integer>>();
+        personSlots = new HashMap<>();
     }
 
     public synchronized static ReservationManagerV2 getInstance() {
@@ -46,7 +46,20 @@ public class ReservationManagerV2 {
     }
 
     public void checkClearPersonReservations(Person person){
+        //Otherwise, Person doesn't exist yet, nothing to do!
         if(this.lastIterationPersonReserved.containsKey(person.getId())){
+            //Otherwise, this person's reservations are for the current iteration, so nothing to remove!
+            //TODO: OH SHIT WAS THIS NOT WORKING THE WHOLE TIME!!!
+            // WHAT WAS HAPPENING! IT SEEMED TO BE WORKING!!!
+            // IT SHOULD BE:
+            // if(!this.lastIterationPersonReserved.get(person.getId()).equals(currentIteration)){
+            // NOTE: this was working as it was, the console was propery logging.
+            // Some people did have existing reservations to delete and not delete, so it WAS working,
+            // even though it was jank as fuck!
+            // Actually funny enough this should be working!
+            // As the lastIterationPersonReserved is updated with currentIteration,
+            // the hashmap may store the reference instead of the value?
+            // Regardless, this is to analyse later!
             if(this.lastIterationPersonReserved.get(person.getId()) != currentIteration){
                 //Don't want to print for every person! This could be causing the bottlenecks!
                 //logger.warn("Person " + person.getId() + " had reservations for a previous iteration. Removing their reservations!\n");
@@ -72,12 +85,7 @@ public class ReservationManagerV2 {
                 }
                 handledRemovals++;
                 personSlots.remove(person.getId());
-            } else {
-                //This person's reservations are for the current iteration
-                // nothing to remove!
             }
-        } else {
-            //Person doesn't exist yet, nothing to do!
         }
     }
 
@@ -138,8 +146,7 @@ public class ReservationManagerV2 {
         //THIS WAS RETURNING NULL
         //IF THERE IS NO K,V ENTRY FOR timeToCheck, then will return null
         if(reserve != null){
-            int reservations = reserve.getReservations(link);
-            return reservations ;
+            return reserve.getReservations(link);
         } else {
             //reservations.put(timeToCheck, new ReservationSlot(link));
             return 0;
